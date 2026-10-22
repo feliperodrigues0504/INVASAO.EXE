@@ -212,36 +212,30 @@ b {
 #screen-title {
   background: rgba(0, 0, 0, 0.45);
   flex-direction: row;
-  gap: 40px;
+  align-items: center;
+  gap: 48px;
 }
 
+/* o nome do jogo é o único destaque; o resto fica discreto */
 .title-wrap {
   text-align: center;
 }
-.title-event {
-  font-family: var(--pixel);
-  font-size: 15px;
-  color: var(--ciano);
-  letter-spacing: 3px;
-  margin-bottom: 10px;
-}
 .title-sub {
-  font-size: 28px;
-  margin-top: 4px;
-  color: #b9ffb0;
+  font-size: 22px;
+  margin-top: 6px;
+  color: var(--verde-medio);
+  letter-spacing: 1px;
 }
-.title-course {
-  font-family: var(--pixel);
-  font-size: 16px;
-  margin-top: 12px;
-  color: var(--ambar);
+.title-wrap .press {
+  margin-top: 34px;
+  font-size: 15px;
 }
 
 h1.glitch {
   position: relative;
   margin: 0;
   font-family: var(--pixel);
-  font-size: 64px;
+  font-size: 68px;
   line-height: 1.2;
   color: var(--verde);
   text-shadow: 0 0 4px rgba(57, 255, 20, 0.6);
@@ -310,12 +304,14 @@ h1.glitch {
 
 .title-rank {
   width: 250px;
-  padding: 16px 18px;
-  background: rgba(0, 12, 0, 0.9);
-  border: 2px solid var(--verde-medio);
+  padding: 18px 20px;
+  background: rgba(0, 12, 0, 0.88);
+  border: 1px solid var(--verde-medio);
+  border-left: 3px solid var(--verde);
 }
 .title-rank .panel-title {
-  font-size: 16px;
+  font-size: 15px;
+  margin-bottom: 12px;
 }
 .title-rank ol {
   margin: 0;

@@ -10,8 +10,10 @@ test.describe('abertura do jogo', () => {
     await jogo.abrir();
     expect(await jogo.estado()).toBe('titulo');
     await expect(page.locator('#screen-title')).toBeVisible();
-    await expect(page.locator('#title-event')).toHaveText('OBSERVATÓRIO DE CURSOS');
-    await expect(page.locator('#title-course')).toHaveText('SISTEMAS DE INFORMAÇÃO');
+    // só o nome do jogo em destaque, com o ranking ao lado
+    await expect(page.locator('#screen-title h1')).toHaveText('INVASÃO.EXE');
+    await expect(page.locator('#screen-title')).not.toContainText('OBSERVATÓRIO');
+    await expect(page.locator('#screen-title .title-rank')).toBeVisible();
     // um único arquivo: nada além do próprio index.html (fontes e scripts embutidos)
     expect(requisicoes.filter(u => !u.startsWith('data:'))).toHaveLength(1);
   });

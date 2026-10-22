@@ -119,8 +119,6 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
     Sound.pararMusica();
     ocultar('hud');
     ocultar('banner');
-    $('title-event').textContent = CONFIG.evento;
-    $('title-course').textContent = CONFIG.curso;
     for (const modo of ['normal', 'rapido'] as const) {
       const lista = ranking.top(3, modo);
       trocar(
