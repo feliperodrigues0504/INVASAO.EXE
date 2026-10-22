@@ -1,0 +1,7 @@
+* text=auto eol=lf
+# o cmd do Windows precisa de CRLF para os "goto" do atalho funcionarem
+*.bat text eol=crlf
+*.woff2 binary
+*.png binary
+*.ico binary
+*.icns binary

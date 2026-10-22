@@ -1,0 +1,414 @@
+{
+  "evento": {
+    "evento": "OBSERVATÓRIO DE CURSOS",
+    "curso": "SISTEMAS DE INFORMAÇÃO",
+    "rankingTela": 10,
+    "voltarTituloSeg": 25,
+    "ociosoSeg": 60,
+    "pinPadrao": "2026"
+  },
+  "balanceamento": {
+    "comboPasso": 0.05,
+    "comboMax": 20,
+    "curaEntreAndares": 0.25,
+    "itemMax": 3,
+    "bonusConquista": 300
+  },
+  "jogadorBase": {
+    "hp": 100,
+    "atk": 10,
+    "crit": 0.08,
+    "critMult": 2,
+    "bloqueio": 0,
+    "vidaPorAbate": 0,
+    "multCreditos": 1,
+    "velInimigos": 1,
+    "ganhoCombo": 1,
+    "perdoaErro": false,
+    "autocomplete": false,
+    "reviver": 0,
+    "danoChefe": 1,
+    "escudoInicial": 0,
+    "creditos": 0
+  },
+  "modos": {
+    "normal": {
+      "nome": "NORMAL",
+      "rota": [0, 1, 2, 3, 4, 5, 6, 7, 8],
+      "fatorInimigos": 1,
+      "fatorVida": 1,
+      "desc": "9 andares · todas as áreas do curso · ~10 min"
+    },
+    "rapido": {
+      "nome": "RÁPIDO",
+      "rota": [0, 3, 8],
+      "fatorInimigos": 0.6,
+      "fatorVida": 0.6,
+      "desc": "3 andares (Suporte, Banco de Dados e Diretoria) · ~3 min"
+    }
+  },
+  "tiposInimigo": {
+    "bug": {
+      "arquivo": "bug.exe",
+      "sprite": "bug"
+    },
+    "virus": {
+      "arquivo": "virus.dll",
+      "sprite": "virus"
+    },
+    "glitch": {
+      "arquivo": "glitch.sys",
+      "sprite": "glitch"
+    },
+    "email": {
+      "arquivo": "phish.msg",
+      "sprite": "email"
+    },
+    "worm": {
+      "arquivo": "worm.bat",
+      "sprite": "worm"
+    },
+    "pacote": {
+      "arquivo": "pacote.tmp",
+      "sprite": "pacote"
+    }
+  },
+  "conquistas": [
+    {
+      "id": "primeiro",
+      "nome": "Primeiro Commit",
+      "icone": ">_",
+      "desc": "Remova o primeiro inimigo."
+    },
+    {
+      "id": "combo10",
+      "nome": "Em Ritmo",
+      "icone": "x10",
+      "desc": "Chegue a um combo x10."
+    },
+    {
+      "id": "combo20",
+      "nome": "Multithread Humano",
+      "icone": "x20",
+      "desc": "Chegue a um combo x20."
+    },
+    {
+      "id": "chefe",
+      "nome": "Suporte Nível 1",
+      "icone": "[!]",
+      "desc": "Derrote um chefão."
+    },
+    {
+      "id": "limpo",
+      "nome": "Código Limpo",
+      "icone": "{ }",
+      "desc": "Conclua um andar sem errar nenhuma letra."
+    },
+    {
+      "id": "intocavel",
+      "nome": "Firewall Humano",
+      "icone": "[#]",
+      "desc": "Conclua um andar sem levar dano."
+    },
+    {
+      "id": "raiz",
+      "nome": "Raiz",
+      "icone": "/.",
+      "desc": "Derrote um chefão sem usar itens no andar."
+    },
+    {
+      "id": "porumfio",
+      "nome": "Por um Fio",
+      "icone": "1hp",
+      "desc": "Derrote um chefão com menos de 10% de integridade."
+    },
+    {
+      "id": "acentos",
+      "nome": "Mestre dos Acentos",
+      "icone": "áç",
+      "desc": "Conclua um andar onde os acentos contam."
+    },
+    {
+      "id": "veloz",
+      "nome": "Fibra Óptica",
+      "icone": ">>>",
+      "desc": "Digite uma frase de chefão a 60 ppm ou mais."
+    },
+    {
+      "id": "investidor",
+      "nome": "Investidor",
+      "icone": "$$$",
+      "desc": "Acumule 200 ₿ de uma vez."
+    },
+    {
+      "id": "zerou",
+      "nome": "Sistema Restaurado",
+      "icone": "9/9",
+      "desc": "Vença o jogo."
+    }
+  ],
+  "raridades": {
+    "comum": {
+      "nome": "COMUM",
+      "peso": 60,
+      "cor": "#39ff14"
+    },
+    "raro": {
+      "nome": "RARO",
+      "peso": 30,
+      "cor": "#00e5ff"
+    },
+    "epico": {
+      "nome": "ÉPICO",
+      "peso": 10,
+      "cor": "#ff2bd6"
+    }
+  },
+  "upgrades": [
+    {
+      "id": "overclock",
+      "nome": "Overclock",
+      "icone": ">>>",
+      "raridade": "comum",
+      "max": 5,
+      "desc": "+25% de dano em todos os ataques.",
+      "efeitos": [
+        {
+          "atributo": "atk",
+          "op": "mul",
+          "valor": 1.25
+        }
+      ]
+    },
+    {
+      "id": "firewall",
+      "nome": "Firewall",
+      "icone": "[#]",
+      "raridade": "comum",
+      "max": 5,
+      "desc": "+25 de integridade máxima e recupera 25.",
+      "efeitos": [
+        {
+          "atributo": "maxHp",
+          "op": "add",
+          "valor": 25
+        },
+        {
+          "atributo": "hp",
+          "op": "add",
+          "valor": 25
+        }
+      ]
+    },
+    {
+      "id": "ssd",
+      "nome": "SSD NVMe",
+      "icone": "|=|",
+      "raridade": "comum",
+      "max": 4,
+      "desc": "Inimigos atacam 12% mais devagar.",
+      "efeitos": [
+        {
+          "atributo": "velInimigos",
+          "op": "mul",
+          "valor": 0.88
+        }
+      ]
+    },
+    {
+      "id": "mineracao",
+      "nome": "Mineração",
+      "icone": "$$$",
+      "raridade": "comum",
+      "max": 3,
+      "desc": "+50% de créditos ganhos.",
+      "efeitos": [
+        {
+          "atributo": "multCreditos",
+          "op": "add",
+          "valor": 0.5
+        }
+      ]
+    },
+    {
+      "id": "cache",
+      "nome": "Cache",
+      "icone": "{ }",
+      "raridade": "comum",
+      "max": 3,
+      "desc": "Começa cada andar com +1 escudo.",
+      "efeitos": [
+        {
+          "atributo": "escudoInicial",
+          "op": "add",
+          "valor": 1
+        }
+      ]
+    },
+    {
+      "id": "exploit",
+      "nome": "Exploit",
+      "icone": "/!\\",
+      "raridade": "raro",
+      "max": 4,
+      "desc": "+10% de chance de acerto crítico.",
+      "efeitos": [
+        {
+          "atributo": "crit",
+          "op": "add",
+          "valor": 0.1
+        }
+      ]
+    },
+    {
+      "id": "criptografia",
+      "nome": "Criptografia",
+      "icone": "***",
+      "raridade": "raro",
+      "max": 3,
+      "desc": "15% de chance de bloquear um ataque.",
+      "efeitos": [
+        {
+          "atributo": "bloqueio",
+          "op": "add",
+          "valor": 0.15
+        }
+      ]
+    },
+    {
+      "id": "garbage",
+      "nome": "Garbage Collector",
+      "icone": "(x)",
+      "raridade": "raro",
+      "max": 3,
+      "desc": "Recupera 4 de integridade a cada inimigo removido.",
+      "efeitos": [
+        {
+          "atributo": "vidaPorAbate",
+          "op": "add",
+          "valor": 4
+        }
+      ]
+    },
+    {
+      "id": "multithread",
+      "nome": "Multithread",
+      "icone": "|||",
+      "raridade": "raro",
+      "max": 1,
+      "desc": "O combo cresce 2x mais rápido.",
+      "efeitos": [
+        {
+          "atributo": "ganhoCombo",
+          "op": "set",
+          "valor": 2
+        }
+      ]
+    },
+    {
+      "id": "corretor",
+      "nome": "Corretor Ortográfico",
+      "icone": "abc",
+      "raridade": "raro",
+      "max": 1,
+      "desc": "O primeiro erro de cada palavra não zera o combo.",
+      "efeitos": [
+        {
+          "atributo": "perdoaErro",
+          "op": "set",
+          "valor": true
+        }
+      ]
+    },
+    {
+      "id": "vpn",
+      "nome": "VPN",
+      "icone": "<->",
+      "raridade": "raro",
+      "max": 1,
+      "desc": "Chefões causam 30% menos dano.",
+      "efeitos": [
+        {
+          "atributo": "danoChefe",
+          "op": "set",
+          "valor": 0.7
+        }
+      ]
+    },
+    {
+      "id": "autocomplete",
+      "nome": "Autocomplete",
+      "icone": "a__",
+      "raridade": "epico",
+      "max": 1,
+      "desc": "A primeira letra de cada palavra já vem digitada.",
+      "efeitos": [
+        {
+          "atributo": "autocomplete",
+          "op": "set",
+          "valor": true
+        }
+      ]
+    },
+    {
+      "id": "backup",
+      "nome": "Backup na Nuvem",
+      "icone": "^^^",
+      "raridade": "epico",
+      "max": 1,
+      "desc": "Ao ser derrotado, revive uma vez com 50% de integridade.",
+      "efeitos": [
+        {
+          "atributo": "reviver",
+          "op": "add",
+          "valor": 1
+        }
+      ]
+    },
+    {
+      "id": "zeroday",
+      "nome": "Zero-Day",
+      "icone": "0x0",
+      "raridade": "epico",
+      "max": 1,
+      "desc": "Críticos causam 3x de dano (em vez de 2x).",
+      "efeitos": [
+        {
+          "atributo": "critMult",
+          "op": "set",
+          "valor": 3
+        }
+      ]
+    }
+  ],
+  "itens": [
+    {
+      "id": "cafe",
+      "nome": "Café",
+      "icone": "c[_]",
+      "preco": 30,
+      "desc": "Inimigos ficam 60% mais lentos por 8 segundos."
+    },
+    {
+      "id": "patch",
+      "nome": "Patch de Correção",
+      "icone": "+",
+      "preco": 25,
+      "desc": "Recupera 35 de integridade."
+    },
+    {
+      "id": "antivirus",
+      "nome": "Antivírus",
+      "icone": "(!)",
+      "preco": 50,
+      "desc": "Causa 40 de dano em TODOS os inimigos."
+    },
+    {
+      "id": "escudo",
+      "nome": "Firewall Portátil",
+      "icone": "[#]",
+      "preco": 40,
+      "desc": "Bloqueia os próximos 2 ataques."
+    }
+  ]
+}

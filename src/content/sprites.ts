@@ -1,11 +1,25 @@
 // =====================================================================
 //  Pixel art desenhada em texto. Cada letra é uma cor da paleta,
-//  '.' é transparente. Os sprites são convertidos em canvas uma vez só.
+//  '.' é transparente. O render/sprites.ts converte em canvas uma vez só.
 // =====================================================================
 
-const SPRITES = {
+export interface SpriteDef {
+  pal: Record<string, string>;
+  grid: string[];
+}
+
+export const SPRITES: Record<string, SpriteDef> = {
   hacker: {
-    pal: { k: '#050805', H: '#2f5c40', h: '#1b3626', s: '#d9a07a', g: '#39ff14', L: '#3b3f45', p: '#1c2533', b: '#0d0d0d' },
+    pal: {
+      k: '#050805',
+      H: '#2f5c40',
+      h: '#1b3626',
+      s: '#d9a07a',
+      g: '#39ff14',
+      L: '#3b3f45',
+      p: '#1c2533',
+      b: '#0d0d0d',
+    },
     grid: [
       '.....kkkkkk.....',
       '....kHHHHHHk....',
@@ -127,7 +141,16 @@ const SPRITES = {
 
   // ---------------- chefões ----------------
   impressora: {
-    pal: { k: '#050805', W: '#f0f0f0', G: '#c8c8c8', L: '#8a9096', D: '#4d5359', r: '#ff2244', R: '#ff99aa', g: '#39ff14' },
+    pal: {
+      k: '#050805',
+      W: '#f0f0f0',
+      G: '#c8c8c8',
+      L: '#8a9096',
+      D: '#4d5359',
+      r: '#ff2244',
+      R: '#ff99aa',
+      g: '#39ff14',
+    },
     grid: [
       '........kkkkkkkk........',
       '........kWWWWWWk........',
@@ -229,7 +252,16 @@ const SPRITES = {
     ],
   },
   wifi: {
-    pal: { k: '#050805', A: '#555b61', W: '#00e5ff', G: '#3a3f47', D: '#22262c', r: '#ff2244', R: '#ff99aa', l: '#39ff14' },
+    pal: {
+      k: '#050805',
+      A: '#555b61',
+      W: '#00e5ff',
+      G: '#3a3f47',
+      D: '#22262c',
+      r: '#ff2244',
+      R: '#ff99aa',
+      l: '#39ff14',
+    },
     grid: [
       '...k................k...',
       '..kAk.....WWWW.....kAk..',
@@ -254,7 +286,17 @@ const SPRITES = {
     ],
   },
   servidor: {
-    pal: { k: '#050805', f: '#ff4500', F: '#ff8c00', Y: '#ffd700', S: '#3a3f47', g: '#39ff14', r: '#ff2244', R: '#ff99aa', W: '#ffffff' },
+    pal: {
+      k: '#050805',
+      f: '#ff4500',
+      F: '#ff8c00',
+      Y: '#ffd700',
+      S: '#3a3f47',
+      g: '#39ff14',
+      r: '#ff2244',
+      R: '#ff99aa',
+      W: '#ffffff',
+    },
     grid: [
       '.....f...f....f...f.....',
       '....fFf.fFf..fFf.fFf....',
@@ -360,39 +402,3 @@ const SPRITES = {
     ],
   },
 };
-
-const Sprites = (() => {
-  const cache = {};
-
-  // Gera { canvas, flash, w, h, pixels } — pixels serve para a explosão em partículas
-  function get(name, scale, palOverride) {
-    const key = name + '|' + scale + '|' + (palOverride ? JSON.stringify(palOverride) : '');
-    if (cache[key]) return cache[key];
-    const def = SPRITES[name];
-    const pal = Object.assign({}, def.pal, palOverride || {});
-    const h = def.grid.length;
-    const w = Math.max(...def.grid.map(r => r.length));
-    const canvas = document.createElement('canvas');
-    const flash = document.createElement('canvas');
-    canvas.width = flash.width = w * scale;
-    canvas.height = flash.height = h * scale;
-    const ctx = canvas.getContext('2d');
-    const fctx = flash.getContext('2d');
-    fctx.fillStyle = '#ffffff';
-    const pixels = [];
-    for (let y = 0; y < h; y++) {
-      const row = def.grid[y];
-      for (let x = 0; x < row.length; x++) {
-        const color = pal[row[x]];
-        if (!color) continue;
-        ctx.fillStyle = color;
-        ctx.fillRect(x * scale, y * scale, scale, scale);
-        fctx.fillRect(x * scale, y * scale, scale, scale);
-        pixels.push({ x: x * scale, y: y * scale, c: color });
-      }
-    }
-    return (cache[key] = { canvas, flash, w: w * scale, h: h * scale, pixels, scale });
-  }
-
-  return { get };
-})();
