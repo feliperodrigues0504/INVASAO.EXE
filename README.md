@@ -11,6 +11,17 @@ que aparecem sobre os inimigos. Quanto mais alto o andar, mais difíceis ficam a
 
 Funciona **100% offline**: as fontes estão embutidas, e os sons e a pixel art são gerados pelo código.
 
+![Tela título do INVASÃO.EXE](docs/imagens/titulo.png)
+
+| Batalha | Chefão |
+|---|---|
+| ![Batalha no andar 7, com três inimigos e as palavras a digitar](docs/imagens/batalha.png) | ![Chefão Tela Azul da Morte com a frase no prompt](docs/imagens/chefao.png) |
+| **Cartas de upgrade** | **Relatório de desempenho** |
+| ![Escolha de 1 entre 3 cartas de upgrade](docs/imagens/cartas.png) | ![Relatório com velocidade por andar, teclas erradas e conquistas](docs/imagens/relatorio.png) |
+
+**Tecnologias:** TypeScript, Vite (build em arquivo único), Canvas 2D, Web Audio, Zod (validação do
+conteúdo), Tauri (app de desktop), Vitest, Playwright e Stryker (testes), GitHub Actions (CI e releases).
+
 ---
 
 ## No dia do evento
@@ -107,7 +118,7 @@ Textos, palavras, chefões e balanceamento ficam em **JSON**, sem precisar mexer
 
 - **`src/content/andares.json`**: os 9 andares (palavras, frases e falas dos chefões, curiosidades
   "Você sabia?", dificuldade: `hp`, `dano`, `atkBase`, `porLetra`...).
-- **`src/content/jogo.json`**: evento e curso, tempos do quiosque, PIN padrão, modos de jogo, conquistas,
+- **`src/content/jogo.json`**: nome do curso (aparece na tela de fim de jogo), tempos do quiosque, PIN padrão, modos de jogo, conquistas,
   atributos do jogador, cartas de upgrade (efeitos como `{ "atributo": "atk", "op": "mul", "valor": 1.25 }`)
   e itens da loja.
 - **`src/content/sprites.ts`**: a pixel art (cada letra é uma cor da paleta e `.` é transparente).

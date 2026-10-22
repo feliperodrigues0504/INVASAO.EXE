@@ -201,6 +201,26 @@ uma frente nova.
 | R11 | Conteúdo: toda conquista é alcançável? | 70/70 | **BAL-02** (combo x20 impossível no rápido); M23 morto |
 | R12 | Final: **23 mutantes** + validação completa + motivo de cada morte + 3 execuções seguidas | 70/70 (×3) | **23/23 mortos**; TST-09 (teste instável) |
 
+### Parecer final da versão 3 (modernização + auditoria, 22/10/2026)
+
+**Apto para o Observatório.** Validação da versão 3, com a CI do GitHub verde em todos os jobs:
+
+| Verificação | Resultado |
+|---|---|
+| Testes de unidade (Vitest) | **169/169**, cobertura de ~98% das linhas da lógica do jogo |
+| Testes E2E no build real via `file://`, rede bloqueada (Playwright) | **36/36** + 2 de desempenho, incluindo a regressão visual de 15 telas |
+| Partidas completas do robô (4 velocidades) + resistência | **5/5**: robô a 100 ppm chega ao andar 8/9; ciclo de quiosque sem travar |
+| Desempenho, cena mais pesada, sem GPU | 13,8 ms/quadro em 960×540 e 11,5 ms em 1920×1080 (orçamento: 16,6 ms) |
+| Teste de mutação (Stryker) | **69,9%** dos bugs injetados detectados (o restante é sobretudo cosmético: logs, duração de efeitos) |
+| App de desktop (Tauri) | compila na CI e gera o `.exe` portátil e o instalador |
+
+A auditoria corrigiu 4 bugs no jogo (AUD-01 a AUD-03 e AUD-05, este de severidade **alta** e herdado da
+versão 2) e 1 defeito grave na ferramenta de mutação (AUD-06). Tela título simplificada: só o nome do jogo
+em destaque, com o ranking ao lado.
+
+**Pendente, e só uma pessoa consegue fazer:** testar o `.exe` no PC do evento e a checagem manual da seção 2
+(som, teclado ABNT2 físico, monitor, abrir um CSV exportado no Excel).
+
 ### Parecer final após as auditorias R8–R12
 
 **Apto para o Observatório.** 70 testes automatizados, estáveis em 3 execuções seguidas; 23 de 23 bugs
