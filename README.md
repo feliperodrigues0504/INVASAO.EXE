@@ -1,5 +1,7 @@
 # INVASÃO.EXE — RPG de digitação hacker
 
+[![CI](https://github.com/feliperodrigues0504/INVASAO.EXE/actions/workflows/ci.yml/badge.svg)](https://github.com/feliperodrigues0504/INVASAO.EXE/actions/workflows/ci.yml)
+
 Jogo feito para o **Observatório de Cursos**, apresentando o curso de **Sistemas de Informação**.
 
 O jogador é um estagiário de SI que precisa limpar os **9 andares** de uma empresa invadida por vírus.
@@ -7,21 +9,35 @@ Cada andar representa uma área do curso e tem um **chefão**. Para atacar, bast
 que aparecem sobre os inimigos. Quanto mais alto o andar, mais difíceis ficam as palavras e mais
 **acentos** aparecem.
 
-## Como rodar
+Funciona **100% offline**: as fontes estão embutidas, e os sons e a pixel art são gerados pelo código.
 
-**No dia do evento:** dê dois cliques em **`INICIAR_EVENTO.bat`**. O jogo abre em tela cheia travada
-(modo quiosque): sem barra de endereço, sem abas e sem como fechar sem querer. Para sair: **Alt + F4**.
-O ranking do evento fica num perfil próprio do navegador, separado do seu navegador do dia a dia.
+---
 
-**Para testar em casa:** abra o `index.html` no **Chrome** ou no **Edge** (F11 = tela cheia).
+## No dia do evento
 
-Não precisa de internet nem de instalação: as fontes estão na pasta `fonts/` e os sons e a pixel art
-são gerados pelo próprio código.
+Baixe a versão mais recente na página de
+[**Releases**](https://github.com/feliperodrigues0504/INVASAO.EXE/releases) e escolha **uma** das opções:
 
-> Atenção: o ranking do atalho (`INICIAR_EVENTO.bat`) e o ranking de quando você abre o `index.html`
-> direto são **separados**. No evento, use sempre o atalho.
+| Opção | Como usar |
+|---|---|
+| **App (recomendado)** — `InvasaoExe-portatil.exe` ou o instalador `*-setup.exe` | Dois cliques. Abre em tela cheia, sem depender do navegador, e guarda uma **cópia de segurança do ranking em arquivo**. |
+| **Pacote web** — `InvasaoExe-web.zip` | Descompacte e dê dois cliques em **`INICIAR_EVENTO.bat`**. Abre o Edge/Chrome em tela cheia travada (modo quiosque), com um perfil próprio do navegador. |
 
-> O som só começa depois da primeira tecla apertada (regra dos navegadores).
+Nas duas opções, para **sair**: **Alt + F4**.
+
+> O ranking do app, o do atalho `.bat` e o de abrir o `index.html` direto são **separados**.
+> No evento, use sempre a mesma opção.
+
+### Checklist do estande
+
+- Abra o jogo e apague o ranking de teste: na tela título, **Ctrl + Shift + O** → PIN → **5** → **5**.
+- Fila grande? No painel, aperte **1** até ficar "SEMPRE RÁPIDO".
+- No fim do dia, exporte o ranking (painel → **4**): vai para a pasta **Downloads**.
+- Use um **teclado ABNT2** (com Ç) e, se possível, uma TV ou monitor grande.
+- Desative a suspensão de tela e o protetor de tela do Windows; deixe o notebook na tomada.
+- O som só começa depois da primeira tecla apertada (regra dos navegadores).
+
+---
 
 ## Como jogar
 
@@ -44,7 +60,7 @@ são gerados pelo próprio código.
 - Andares 1-2: sem acentos. Andares 3-4: acentos aparecem, mas dá para digitar sem eles.
   Andares 5-9: **os acentos contam!**
 
-## Os 9 andares
+### Os 9 andares
 
 | # | Andar | Chefão |
 |---|---|---|
@@ -58,93 +74,92 @@ são gerados pelo próprio código.
 | 8 | Dados & Inteligência Artificial | I.A. Rebelde |
 | 9 | Diretoria | O Prazo de Entrega |
 
-## Personalizar
-
-Quase tudo fica em **`js/data.js`**:
-
-- `CONFIG`: nome do evento, do curso, tempo para voltar ao título e `ociosoSeg` (se um visitante abandonar
-  o jogo num menu por 60 s, a partida é encerrada e o jogo volta ao título sozinho).
-- `ANDARES`: palavras, frases dos chefões, falas, curiosidades ("Você sabia?") e dificuldade
-  (`hp`, `dano`, `atkBase`, `porLetra` = segundos extras de tempo por letra antes do ataque).
-- `UPGRADES` e `ITENS`: cartas e loja.
-- `JOGADOR_BASE`: vida, dano e atributos iniciais.
-
-A pixel art fica em `js/sprites.js`: cada letra do desenho é uma cor da paleta e `.` é transparente.
+---
 
 ## Painel do organizador
 
-Na **tela título**, aperte **Ctrl + Shift + O** e digite o PIN (**2026**, mude em `CONFIG.pinOrganizador`
-no `js/data.js`). O painel mostra as estatísticas do dia (partidas, vitórias, velocidade e precisão médias,
-melhor pontuação, conquistas mais comuns) e permite:
+Na **tela título**, aperte **Ctrl + Shift + O** e digite o PIN (padrão **2026**, definido em
+`src/content/jogo.json`; dá para trocar pelo próprio painel). O painel mostra as estatísticas do dia
+(partidas, vitórias, velocidade e precisão médias, líderes de cada modo, conquistas mais comuns) e permite:
 
 | Tecla | Ação |
 |---|---|
-| 1 | Modo de jogo: o jogador escolhe / sempre NORMAL / sempre RÁPIDO (útil com fila grande) |
+| 1 | Modo de jogo: o jogador escolhe / sempre NORMAL / sempre RÁPIDO |
 | 2 | Liga/desliga o som |
 | 3 | Volume: 25% / 50% / 75% / 100% |
 | 4 | Exporta o ranking para planilha (CSV, abre no Excel) na pasta Downloads |
 | 5 | Apaga o ranking (precisa apertar 2 vezes) |
+| 6 | Efeitos de tela **reduzidos**: sem tremor e sem piscar (pessoas com fotossensibilidade) |
+| 7 | Trocar o PIN (fica salvo como hash, não em texto) |
 | ESC | Volta ao jogo |
 
-Os ajustes ficam salvos mesmo fechando o navegador.
+Os ajustes ficam salvos mesmo fechando o jogo. Se o Windows estiver com "reduzir animações" ligado, os
+efeitos reduzidos já começam ativados.
 
-## Ranking
+No console do navegador (**F12**): `INVASAO.exportarRanking()` mostra o ranking em tabela e
+`INVASAO.limparRanking()` apaga o ranking.
 
-O ranking fica salvo **no navegador do computador** (localStorage), separado por modo (normal e
-rápido). Também dá para administrar pelo console (**F12** → aba *Console*):
+---
 
-```js
-INVASAO.exportarRanking()   // mostra todos os resultados em tabela
-INVASAO.limparRanking()     // apaga o ranking
+## Personalizar o conteúdo
+
+Textos, palavras, chefões e balanceamento ficam em **JSON**, sem precisar mexer no código:
+
+- **`src/content/andares.json`**: os 9 andares (palavras, frases e falas dos chefões, curiosidades
+  "Você sabia?", dificuldade: `hp`, `dano`, `atkBase`, `porLetra`...).
+- **`src/content/jogo.json`**: evento e curso, tempos do quiosque, PIN padrão, modos de jogo, conquistas,
+  atributos do jogador, cartas de upgrade (efeitos como `{ "atributo": "atk", "op": "mul", "valor": 1.25 }`)
+  e itens da loja.
+- **`src/content/sprites.ts`**: a pixel art (cada letra é uma cor da paleta e `.` é transparente).
+
+O conteúdo é **validado** ao abrir o jogo ([`src/content/schema.ts`](src/content/schema.ts)). Um erro
+de edição (campo faltando, número inválido, sprite inexistente...) aparece **na tela, com o local exato**,
+em vez de uma tela preta, e também reprova os testes (`npm test`).
+
+---
+
+## Desenvolvimento
+
+Requisitos: **Node.js 20+** (recomendado 24). Para o app de desktop, também o
+[Rust](https://www.rust-lang.org/tools/install) (a CI já compila o app, então não é obrigatório).
+
+```bash
+npm install          # instala as dependências
+npm run dev          # servidor de desenvolvimento com recarga automática (http://localhost:5173)
+npm run build        # gera dist/index.html: UM arquivo, abre com dois cliques, offline
+npm run app:build    # gera o executável do Windows (precisa do Rust)
 ```
 
-O nick aceita até **30 caracteres** (letras, números, espaço, `_ - .`). Nicks com palavrões são bloqueados
-(lista em `js/ranking.js`), sem barrar nomes inocentes como "Computação" ou "Rolando".
+| Comando | O que faz |
+|---|---|
+| `npm test` | Testes de unidade (Vitest): regras da batalha, conteúdo, ranking, nick, máquina de estados, render. ~4 s |
+| `npm run test:e2e` | Testes de ponta a ponta (Playwright) no **build real**, aberto via `file://` como no evento: fluxo completo com teclado, acentos ABNT2, quiosque, painel, layout no pior caso, segurança, fuzz de 3000 teclas, desempenho e **regressão visual** (screenshots) |
+| `npm run test:e2e:robo` | Partidas completas jogadas por um robô em 4 velocidades + teste de resistência (lento) |
+| `npm run test:e2e:update` | Atualiza as screenshots de referência depois de uma mudança visual **intencional** |
+| `npm run test:mutation` | Teste de mutação (Stryker): injeta bugs na lógica e confere se os testes pegam cada um |
+| `npm run validar` | Lint + formatação + tipos + unidade + E2E: tudo o que a CI roda |
+| `npm run lint` / `npm run format` | ESLint / Prettier |
 
-## Validação antes do evento
-
-```
-powershell -ExecutionPolicy Bypass -File tests\validar.ps1
-```
-
-Para conferir se os testes realmente pegam bugs, o `tests\mutacao.ps1` injeta 23 bugs conhecidos em
-cópias do jogo e exige que todos sejam detectados.
-
-O `validar.ps1` roda verificação estática, 70 testes automatizados, partidas completas do robô, screenshots e um teste de
-resistência. Também dá para ver só os testes abrindo `index.html?teste=1`. O histórico de bugs, correções e
-rodadas fica em [docs/VALIDACAO_E_AUDITORIA.md](docs/VALIDACAO_E_AUDITORIA.md).
-
-## Modo de teste (para desenvolvimento)
+Atalhos de desenvolvimento pela URL:
 
 | URL | O que faz |
 |---|---|
-| `index.html?andar=5` | Começa direto no andar 5 (não salva no ranking) |
-| `index.html?andar=5&chefe=1` | Começa direto no chefão do andar 5 |
-| `index.html?bot=1` | Um robô joga sozinho (`?bot=300` = 1 letra a cada 300 ms) |
+| `?andar=5` | Começa direto no andar 5 (não salva no ranking) |
+| `?andar=5&chefe=1` | Começa direto no chefão do andar 5 |
+| `?bot=1` | Um robô joga sozinho (`?bot=300` = 1 letra a cada 300 ms; `&modo=2` = modo rápido) |
+| `?semente=42` | Fixa a aleatoriedade: mesma semente = mesma partida (para reproduzir um bug) |
 
-## Estrutura
+A arquitetura do código está em [docs/ARQUITETURA.md](docs/ARQUITETURA.md), e o histórico de bugs,
+correções e rodadas de validação em [docs/VALIDACAO_E_AUDITORIA.md](docs/VALIDACAO_E_AUDITORIA.md).
 
-```
-index.html        telas e HUD
-css/style.css     visual neon / CRT / glitch
-js/data.js        conteúdo e balanceamento  <- edite aqui
-js/sprites.js     pixel art
-js/sound.js       efeitos sonoros e música 8-bit (Web Audio)
-js/ranking.js     ranking + filtro de nick
-js/fx.js          chuva Matrix, partículas, lasers, tremor
-js/battle.js      regras da batalha
-js/ui.js          fluxo de telas, cartas, loja, ranking
-js/main.js        loop principal e teclado
-tests/testes.js   bateria de testes (index.html?teste=1)
-tests/validar.ps1 validação completa
-docs/             documento de validação e auditoria
+### Integração contínua
+
+A cada push e pull request, o GitHub Actions roda lint, tipos, testes de unidade com cobertura, os testes
+E2E no Windows, as partidas do robô e **compila o app de desktop**. Para publicar uma versão:
+
+```bash
+git tag v3.0.0 && git push origin v3.0.0
 ```
 
-## Dicas para o dia do evento
-
-- Abra pelo `INICIAR_EVENTO.bat` e apague o ranking de teste no painel (Ctrl + Shift + O → 5 → 5).
-- Fila grande? No painel, aperte 1 até ficar "SEMPRE RÁPIDO".
-- No fim do dia, exporte o ranking (painel → 4) para anunciar os vencedores.
-- Use um **teclado ABNT2** (com Ç) e, se possível, uma TV ou monitor grande.
-- Se alguém sair no meio da partida, o jogo volta sozinho para o título depois do fim de jogo.
-- Um prêmio simbólico para o top 3 do dia ajuda a formar fila.
+O workflow de Release gera o instalador, o `.exe` portátil e o pacote web e publica na página de
+Releases. O teste de mutação roda toda segunda-feira (ou sob demanda, na aba Actions).

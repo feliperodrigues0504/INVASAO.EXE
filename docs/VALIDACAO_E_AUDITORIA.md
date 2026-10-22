@@ -7,29 +7,36 @@ registrados aqui. **Objetivo:** garantir que o jogo esteja 100% apto para o Obse
 
 ## 1. Como validar
 
+> A partir da **versão 3** (modernização, 22/10/2026) a validação usa ferramentas padrão de mercado e roda
+> sozinha no GitHub Actions a cada push. Os scripts antigos (`tests\validar.ps1`, `tests\mutacao.ps1`,
+> `index.html?teste=1`) foram substituídos; o histórico das rodadas R1–R12 abaixo continua valendo.
+
 | O quê | Como |
 |---|---|
-| **Validação completa** (recomendado antes do evento) | Na pasta do jogo: `powershell -ExecutionPolicy Bypass -File tests\validar.ps1` |
-| Só os testes automatizados, no navegador | Abrir `index.html?teste=1` (o resultado aparece na tela) |
-| **Teste de mutação** (os testes pegam bugs de verdade?) | `powershell -ExecutionPolicy Bypass -File tests\mutacao.ps1` (ou `-Somente M15,M22`) |
-| Validação rápida (sem robô e sem screenshots) | `tests\validar.ps1 -SemRobo -SemTelas` |
+| **Validação completa** (recomendado antes do evento) | `npm run validar` (lint, formatação, tipos, unidade, E2E) |
+| Só os testes de unidade (lógica, conteúdo, ranking...) | `npm test` (~4 s) |
+| Testes de ponta a ponta no build real | `npm run test:e2e` |
+| **Partidas completas do robô + resistência** | `npm run test:e2e:robo` |
+| **Teste de mutação** (os testes pegam bugs de verdade?) | `npm run test:mutation` (relatório em `reports/mutation/mutation.html`) |
+| Na nuvem | Aba **Actions** do GitHub: CI a cada push; mutação toda segunda-feira |
 
-O `validar.ps1` executa 5 etapas:
+O que cada etapa cobre (equivalência com o antigo `validar.ps1`):
 
-1. **Verificação estática**: acentos "soltos" (caracteres invisíveis), caracteres corrompidos, arquivos e
-   fontes referenciados que não existem, **nenhum endereço da internet**. Também abre o jogo com a **rede
-   "pendurada"** e exige que ele apareça em menos de 10 s reais.
-2. **Bateria de testes automatizados** (`tests/testes.js`): 49 testes de dados, nick, ranking, regras da
-   batalha, chefões, itens, upgrades, renderização, layout no pior caso, fluxo real das telas com teclado
-   simulado e **fuzz de 3000 teclas aleatórias**. O ranking real é salvo antes e restaurado depois. Em
-   seguida mede o **desempenho em tempo real** (ms por quadro na cena mais pesada).
-3. **Partidas completas do robô**: título → nick (30 caracteres) → andares → fim, em 4 velocidades de
-   digitação. Serve para balanceamento e para garantir que nenhum fluxo trava.
-4. **Screenshots** de todas as telas e de 3 resoluções (1366x768, 1280x1024, 1920x1080), para inspeção
-   visual (salvas em `%TEMP%\invasao_validacao`).
-5. **Resistência**: o robô joga sem parar por 40 min simulados, como o quiosque no evento.
+1. **Verificação estática** → `tests/unit/arquivos.test.ts`: acentos "soltos" (caracteres invisíveis),
+   caracteres corrompidos, atalho `.bat` em ASCII com CRLF apontando para o build. O conteúdo (JSON) é
+   validado por schema (`tests/unit/conteudo.test.ts`), inclusive referências cruzadas.
+2. **Sem internet** → todo teste E2E **bloqueia a rede** e reprova qualquer acesso externo; o build é um
+   único `dist/index.html` aberto via `file://`, como no evento.
+3. **Bateria de testes** → 140 testes de unidade (Vitest) + 37 testes E2E (Playwright) com teclado real,
+   acentos ABNT2, quiosque, painel, layout no pior caso, segurança e **fuzz de 3000 teclas**.
+4. **Desempenho em tempo real** → `tests/e2e/desempenho.spec.ts`: cena mais pesada, sem GPU, em 960×540 e
+   1920×1080; orçamento de 16,6 ms por quadro (60 fps).
+5. **Partidas do robô** → `tests/e2e/robo.spec.ts`: 4 velocidades (2 por modo), nick de 30 caracteres.
+6. **Screenshots** → agora é **regressão visual automática**: 15 telas comparadas pixel a pixel com as
+   referências em `tests/e2e/__screenshots__/` (antes era só inspeção manual).
+7. **Resistência** → 20 min simulados de quiosque, ciclo fim → ranking → título → nova partida.
 
-Qualquer erro no console do navegador em qualquer etapa também reprova a validação.
+Qualquer erro no console do navegador em qualquer teste E2E também reprova a validação.
 
 ---
 
@@ -124,6 +131,28 @@ Severidade: **Alta** = estraga o evento ou bloqueia jogadores · **Média** = co
 | FEAT-04 | **Painel do organizador** (Ctrl+Shift+O + PIN): estatísticas do dia, modo fixo, som, volume, exportar CSV, apagar ranking com confirmação; ajustes persistentes | 3 testes (acesso, ajustes, CSV/apagar) + screenshot |
 | FEAT-05 | **Atalho `INICIAR_EVENTO.bat`**: tela cheia travada (quiosque), perfil próprio do navegador | verificação estática (ASCII, CRLF, `--testar`) + argumentos testados no navegador |
 
+### Versão 3 — modernização (22/10/2026)
+
+Migração para Vite + TypeScript, lógica separada da apresentação, conteúdo em JSON validado, app de
+desktop (Tauri) e testes com Vitest/Playwright/Stryker na CI. Veja [ARQUITETURA.md](ARQUITETURA.md).
+
+| ID | Sev. | Área | Problema encontrado | Correção | Coberto por | Status |
+|---|---|---|---|---|---|---|
+| MOD-01 | Média | Ranking | O limite de 1000 registros valia para os **dois modos juntos**: um dia com muitas partidas rápidas apagaria o ranking do modo normal | Limite **por modo** | teste *o limite é POR MODO* | ✅ Corrigido (v3) |
+| MOD-02 | Média | Desempenho | A primeira versão da tela nítida desenhava o quadro inteiro na resolução real: em 1920×1080 sem GPU, **~40 ms por quadro** (o original: ~15 ms). Pego pelo teste de desempenho novo, antes de chegar ao evento | Duas camadas: pixel art em 960×540 (ampliada por CSS, como antes) + só os **textos** na resolução real. Voltou ao custo do original (~17 ms contra ~16 ms, mediana de 5 rodadas) | teste *cena pesada a 1920x1080* | ✅ Corrigido (v3) |
+| MOD-03 | Baixa | Código | A lição 1 se repetiu: a ferramenta de escrita gravou `\u0300-\u036f` e `\uFEFF` como **caracteres invisíveis** em 3 arquivos | Regravados com escape | `tests/unit/arquivos.test.ts` (pegou na primeira execução) | ✅ Corrigido (v3) |
+| MOD-04 | Baixa | Painel | O PIN ficava fixo no código-fonte, visível para quem abrisse o arquivo | PIN trocável pelo painel [7], salvo como hash | teste *o PIN pode ser trocado* | ✅ Feito (v3) |
+| MOD-05 | — | Acessibilidade | Tremor de tela e piscar do CRT sem opção de desligar (fotossensibilidade) | Painel [6] "efeitos reduzidos"; liga sozinho se o Windows estiver com "reduzir animações" | testes do painel + `FX` | ✅ Feito (v3) |
+| MOD-06 | — | Quiosque | Conteúdo com erro de edição deixava a tela preta | O motivo aparece **na tela**, com o campo exato | teste *conteúdo inválido mostra o motivo* (build corrompido de verdade) | ✅ Feito (v3) |
+| TST-10 | — | Testes | O relógio falso do Playwright continua andando em tempo real depois de instalado: o jogo "andava sozinho" entre os comandos do teste (falsas falhas de pausa e de ENTER duplo) | Relógio pausado logo após instalar; o tempo só anda quando o teste manda | — | ✅ Corrigido (v3) |
+| TST-11 | — | Testes | O fuzz novo só forçava vitória num passo exato e às vezes nunca passava por cartas/loja (lição 15) | Vitória forçada a cada ~100 passos em batalha; o teste exige visitar as telas | — | ✅ Corrigido (v3) |
+
+Os 23 mutantes manuais (`mutacoes.json`) foram substituídos assim: os de **lógica** (M02, M05, M06, M09,
+M11, M12...) agora são gerados automaticamente pelo Stryker sobre `src/game` e `src/storage`; os de
+**interface** (M01, M03, M04, M07, M08, M10, M13, M14...) são cobertos pelos testes E2E equivalentes
+(conquistas que não vazam, PIN, CSV, colar bloqueado, inatividade, confirmação de apagar, tecla morta,
+pausa na vitória).
+
 ---
 
 ## 4. Rodadas de validação
@@ -190,8 +219,8 @@ monitor do evento, versão do navegador, limpar o ranking antes de abrir o estan
 1. **Escapes `\uXXXX`**: a ferramenta de escrita converte `\u0300` no próprio caractere invisível.
    Sempre conferir os bytes do arquivo; o `validar.ps1` faz isso automaticamente.
 2. **PowerShell 5**: scripts `.ps1` com acento precisam de BOM UTF-8. Nunca usar `$args` como variável.
-3. **Testes headless**: `requestAnimationFrame` não avança em tempo virtual. Usar `?tick=1` com
-   `--virtual-time-budget`.
+3. **Testes headless**: `requestAnimationFrame` não avança em tempo virtual. Na v3, o relógio falso do
+   Playwright (`page.clock`) controla timers e quadros, mas precisa ser **pausado** logo após instalado (TST-10).
 4. **Filtros por trecho de texto geram falsos positivos** (o "problema de Scunthorpe"). Testar sempre com
    nomes e palavras reais de quem vai jogar.
 5. **Laços que processam vários inimigos** precisam reler o estado a cada iteração: o que um faz muda o
@@ -219,11 +248,17 @@ monitor do evento, versão do navegador, limpar o ranking antes de abrir o estan
     parênteses (ex.: `Program Files (x86)`). Usar `goto`.
 18. **Toda funcionalidade nova entra com teste junto**, e os testes antigos de fluxo são atualizados para as
     telas novas antes de rodar a validação.
-19. **Teste de mutação** (`tests\mutacao.ps1`): injetar bugs conhecidos e exigir que a bateria reprove cada
-    um. Mutante sobrevivente = ponto cego (achou SEG-01). Todo bug corrigido ganha um mutante no
-    `tests\mutacoes.json`.
+19. **Teste de mutação** (desde a v3, Stryker: `npm run test:mutation`): injetar bugs e exigir que a
+    bateria reprove cada um. Mutante sobrevivente = ponto cego (achou SEG-01). Todo bug corrigido ganha um
+    teste que reprova a volta do bug.
 20. **Mutante só conta como morto se morreu pelo motivo certo**: ler a mensagem da falha (TST-06).
 21. **Ferramenta de validação que roda zero casos tem que reprovar**, nunca dizer "ok" (TST-08).
 22. **Conteúdo também tem bug**: simular um "jogador perfeito" prova que toda conquista é possível (BAL-02).
 23. **Teste com dado sorteado é instável**: fixar o que a asserção depende e rodar a bateria várias vezes
     seguidas depois de mudanças (TST-09).
+24. **Toda melhoria visual precisa de medição de desempenho junto**: a tela nítida custou 3x mais em PC sem
+    GPU (MOD-02) e só o teste de desempenho mostrou. Medir sempre contra a versão anterior, na mesma máquina.
+25. **Medição em máquina compartilhada oscila muito** (o mesmo teste variou de 6 a 49 ms): usar o melhor de
+    vários lotes (o ruído só atrasa, nunca adianta) e rodar o teste de desempenho sozinho, depois dos outros.
+26. **Mudou o visual de propósito?** Atualizar as referências (`npm run test:e2e:update`) e **olhar** as
+    imagens novas no diff antes de commitar (lição 12).

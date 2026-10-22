@@ -9,11 +9,15 @@ rem  - Painel do organizador: na tela titulo, aperte Ctrl + Shift + O
 rem  - O ranking fica guardado num perfil proprio do navegador, separado
 rem    do seu navegador do dia a dia (nao se mistura e nao se perde).
 rem
+rem  O jogo e o arquivo dist\index.html (gerado por "npm run build" ou baixado
+rem  pronto na pagina de Releases do GitHub, junto com este atalho).
+rem  Alternativa: o app InvasaoExe.exe (Releases) dispensa este atalho.
+rem
 rem  Teste sem abrir nada:  INICIAR_EVENTO.bat --testar
 rem =====================================================================
 setlocal
 
-set "JOGO=%~dp0index.html"
+set "JOGO=%~dp0dist\index.html"
 set "PERFIL=%LOCALAPPDATA%\InvasaoExe\perfil-evento"
 
 set "NAV="
@@ -44,6 +48,7 @@ if not "%~1"=="--testar" pause
 exit /b 1
 
 :sem_jogo
-echo [ERRO] index.html nao encontrado em: %JOGO%
+echo [ERRO] dist\index.html nao encontrado em: %JOGO%
+echo Rode "npm run build" ou baixe o pacote pronto na pagina de Releases.
 if not "%~1"=="--testar" pause
 exit /b 2

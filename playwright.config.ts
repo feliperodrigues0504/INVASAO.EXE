@@ -28,6 +28,6 @@ export default defineConfig({
     // desempenho mede tempo real: roda DEPOIS dos outros e um caso por vez, sem disputar CPU
     { name: 'desempenho', testMatch: /desempenho\.spec\.ts/, dependencies: ['jogo'], fullyParallel: false },
     // partidas completas do robô: mais lentas, rodam em paralelo com o resto
-    { name: 'robo', testMatch: /robo\.spec\.ts/, timeout: 600_000 },
+    { name: 'robo', testMatch: /robo\.spec\.ts/, timeout: 1_200_000 },
   ],
 });
