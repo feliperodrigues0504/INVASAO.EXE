@@ -2,7 +2,8 @@ dist
 coverage
 reports
 playwright-report
-test-results
+test-results*
+_*.log
 src-tauri/target
 src-tauri/gen
 package-lock.json

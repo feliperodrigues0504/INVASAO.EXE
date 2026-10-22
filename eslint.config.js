@@ -10,7 +10,7 @@ export default tseslint.config(
       'coverage/**',
       'reports/**',
       'playwright-report/**',
-      'test-results/**',
+      'test-results*/**',
       'src-tauri/target/**',
       'src-tauri/gen/**',
       '.stryker-tmp/**',

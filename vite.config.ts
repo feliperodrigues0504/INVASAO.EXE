@@ -21,6 +21,8 @@ export default defineConfig({
       include: ['src/**/*.ts'],
       exclude: ['src/main.ts', 'src/ui/**', 'src/audio/**', 'src/**/*.d.ts'],
       reporter: ['text', 'html'],
+      // a CI reprova se a cobertura da lógica do jogo cair abaixo disto
+      thresholds: { 'src/game/**': { lines: 95, branches: 85 }, 'src/storage/**': { lines: 70 } },
     },
   },
 });

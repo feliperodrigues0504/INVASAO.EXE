@@ -1,0 +1,19 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "_comment": "Teste de mutação: o Stryker injeta pequenos bugs (troca < por <=, apaga um if, inverte um booleano...) na lógica do jogo e confere se os testes de unidade REPROVAM cada um. Mutante que sobrevive = ponto cego dos testes. Rode com: npm run test:mutation (relatório em reports/mutation/mutation.html).",
+  "testRunner": "vitest",
+  "plugins": ["@stryker-mutator/vitest-runner"],
+  "mutate": [
+    "src/game/**/*.ts",
+    "src/storage/**/*.ts",
+    "src/content/**/*.ts",
+    "!src/storage/backup.ts",
+    "!src/storage/armazenamento.ts"
+  ],
+  "reporters": ["clear-text", "progress", "html"],
+  "htmlReporter": { "fileName": "reports/mutation/mutation.html" },
+  "coverageAnalysis": "perTest",
+  "thresholds": { "high": 85, "low": 70, "break": 65 },
+  "timeoutMS": 30000,
+  "concurrency": 4
+}
