@@ -444,6 +444,17 @@ export class Battle extends Emissor<EventosBatalha> {
     this.calcularIntervalo(e);
   }
 
+  // A frase do chefão segue uma ordem fixa e não pode ser sorteada de novo. Se a nova
+  // frase começa com a mesma letra de um capanga ainda não começado, quem troca de
+  // palavra é o capanga; senão a 1ª letra poderia mirar no inimigo errado (AUD-01).
+  private desfazerConflitos(chefe: Inimigo) {
+    const letra = semAcento(chefe.texto[chefe.dig] || '');
+    for (const o of this.b.inimigos) {
+      if (o === chefe || o.morrendo || o === this.b.alvo || o.dig !== this.inicioTexto(o.texto)) continue;
+      if (semAcento(o.texto[o.dig] || '') === letra) this.novoTexto(o);
+    }
+  }
+
   private calcularIntervalo(e: Inimigo) {
     if (e.chefe) {
       let i = e.intervaloBase;
@@ -686,6 +697,7 @@ export class Battle extends Emissor<EventosBatalha> {
     if (b.alvo === e) b.alvo = null;
     this.novoTexto(e);
     if (e.chefe) {
+      this.desfazerConflitos(e);
       if (!e.metade && e.hp <= e.maxHp / 2) {
         e.metade = true;
         this.calcularIntervalo(e);

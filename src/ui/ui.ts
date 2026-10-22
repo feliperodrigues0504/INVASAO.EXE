@@ -20,7 +20,7 @@ import { temAcento, type Battle, type Partida } from '../game/battle';
 import { FX } from '../render/fx';
 import { hashPin, VOLUMES, type GerenciadorAjustes } from '../storage/ajustes';
 import { noApp, salvarCsvNoApp } from '../storage/backup';
-import { gerarCsv } from '../storage/csv';
+import { gerarCsv, nomeArquivoCsv } from '../storage/csv';
 import { limparNick, validarNick } from '../storage/nick';
 import type { Posicao, Ranking } from '../storage/ranking';
 import { $, h, linhaStat, reiniciarAnimacao, trocar, type Filho } from './dom';
@@ -705,7 +705,7 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
 
   function exportarCsv(): Promise<string> {
     const csv = gerarCsv(ranking.carregar());
-    const nome = `ranking-invasao-${new Date().toISOString().slice(0, 10)}.csv`;
+    const nome = nomeArquivoCsv();
     if (noApp()) return salvarCsvNoApp(nome, csv);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
     const a = h('a', { href: URL.createObjectURL(blob), download: nome });
@@ -954,6 +954,10 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
 
   function tecla(e: KeyboardEvent) {
     const k = e.key;
+    // Tecla SEGURADA: o teclado repete o evento ~30x por segundo. Nenhuma ação de menu,
+    // item ou pausa pode repetir (antes, segurar o 5 no painel confirmava sozinho e
+    // apagava o ranking — AUD-05). Letras seguradas continuam digitando normalmente.
+    const repetida = e.repeat;
     atividade();
     if (estado === 'carregando') {
       e.preventDefault();
@@ -962,13 +966,13 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
     if (estado === 'batalha') {
       if (k === 'Escape') {
         e.preventDefault();
-        pausar();
+        if (!repetida) pausar();
       } else if (k === 'Backspace') {
         e.preventDefault();
         battle.soltarAlvo();
       } else if (/^[1-4]$/.test(k)) {
         e.preventDefault();
-        battle.usarItem(+k - 1);
+        if (!repetida) battle.usarItem(+k - 1);
       }
       return;
     }
@@ -976,7 +980,7 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
       if (k.length === 1 || k === 'Enter') e.preventDefault();
       return;
     }
-    if (travado()) {
+    if (travado() || repetida) {
       if (k === 'Enter') e.preventDefault();
       return;
     }

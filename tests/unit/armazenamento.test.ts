@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { criarAjustes, hashPin } from '../../src/storage/ajustes';
 import { armazenamentoMemoria, type Armazenamento } from '../../src/storage/armazenamento';
-import { gerarCsv } from '../../src/storage/csv';
+import { dataLocal, gerarCsv, nomeArquivoCsv } from '../../src/storage/csv';
 import { limparNick, NICK_MAX, validarNick } from '../../src/storage/nick';
 import { CHAVE_RANKING, criarRanking, LIMITE_POR_MODO } from '../../src/storage/ranking';
 
@@ -168,9 +168,62 @@ describe('CSV para o Excel', () => {
     expect(linhas[2]).toContain('"Ana; ""A"""');
   });
 
+  it('nick que começa com = + - @ não vira fórmula no Excel (AUD-03)', () => {
+    const base = {
+      andar: 1,
+      venceu: false,
+      ppm: 1,
+      precisao: 1,
+      total: 9,
+      modo: 'normal' as const,
+      data: '',
+      conquistas: [],
+    };
+    const csv = gerarCsv([
+      { ...base, id: 1, nick: '=HIPERLINK("http://x";"clique")', pontos: 3 },
+      { ...base, id: 2, nick: '-A1', pontos: 2 },
+      { ...base, id: 3, nick: '@SOMA', pontos: 1 },
+    ]);
+    const nicks = csv
+      .slice(1)
+      .split('\r\n')
+      .slice(1)
+      .map(l => l.split(';')[1]);
+    expect(nicks[0]).toBe(`"'=HIPERLINK(""http://x""`); // o campo segue até o próximo ; entre aspas
+    expect(nicks.slice(1)).toEqual(["'-A1", "'@SOMA"]);
+    // números negativos ou nicks comuns não são alterados
+    expect(csv).toContain(';3;normal;');
+  });
+
   it('protege quebras de linha dentro de um campo', () => {
     const csv = gerarCsv([{ ...resultado('a\nb', 1), id: 1, total: 9, modo: 'normal', data: '', conquistas: [] }]);
     expect(csv).toContain('"a\nb"');
+  });
+});
+
+describe('datas do CSV no horário local (AUD-02)', () => {
+  const tzOriginal = process.env.TZ;
+  beforeAll(() => {
+    process.env.TZ = 'America/Sao_Paulo';
+  });
+  afterAll(() => {
+    process.env.TZ = tzOriginal;
+  });
+
+  it('partida às 21:30 em Brasília aparece como 21:30 do mesmo dia (o ISO já é o dia seguinte)', () => {
+    expect(dataLocal('2026-10-18T00:30:00.000Z')).toBe('17/10/2026 21:30');
+    expect(dataLocal('')).toBe('');
+    expect(dataLocal('lixo')).toBe('');
+  });
+
+  it('o nome do arquivo usa o dia local da exportação', () => {
+    expect(nomeArquivoCsv(new Date('2026-10-18T00:30:00.000Z'))).toBe('ranking-invasao-2026-10-17.csv');
+  });
+
+  it('a coluna data do CSV sai em dd/mm/aaaa hh:mm', () => {
+    const r = criarRanking(armazenamentoMemoria());
+    r.adicionar(resultado('Ana', 10, { data: '2026-10-18T00:30:00.000Z' }));
+    expect(gerarCsv(r.carregar()).split('\r\n')[1]).toMatch(/;17\/10\/2026 21:30$/);
   });
 });
 

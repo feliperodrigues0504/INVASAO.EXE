@@ -106,6 +106,50 @@ test('exporta o ranking em CSV para o Excel e só apaga com confirmação', asyn
   expect(await jogo.eval(j => j.ranking.carregar().length), '2º toque apaga').toBe(0);
 });
 
+test('SEGURAR uma tecla não repete a ação: não apaga o ranking nem gasta todos os itens (AUD-05)', async ({
+  jogo,
+  page,
+}) => {
+  // O teclado repete a tecla segurada (~0,5 s depois, ~30x por segundo). Antes, segurar o 5 no
+  // painel pedia a confirmação e, com a repetição, já apagava o ranking inteiro.
+  const segurar = (key: string, repeticoes = 5) =>
+    page.evaluate(
+      ([k, n]) => {
+        document.dispatchEvent(new KeyboardEvent('keydown', { key: k, bubbles: true, cancelable: true }));
+        for (let i = 0; i < n; i++)
+          document.dispatchEvent(
+            new KeyboardEvent('keydown', { key: k, repeat: true, bubbles: true, cancelable: true }),
+          );
+      },
+      [key, repeticoes] as const,
+    );
+  await jogo.abrir();
+  await jogo.eval(j => {
+    j.ranking.adicionar({
+      nick: 'Campeã do Dia',
+      pontos: 99999,
+      andar: 9,
+      total: 9,
+      venceu: true,
+      ppm: 80,
+      precisao: 98,
+    });
+  });
+  await abrirPainel(jogo);
+  await jogo.pular(700);
+  await segurar('5');
+  expect(await jogo.eval(j => j.ranking.carregar().length), 'segurar o 5 não pode apagar o ranking').toBe(1);
+  await expect(page.locator('#painel-msg')).toContainText('certeza');
+
+  // na batalha: segurar o 1 usa UM café, e segurar ESC não fica alternando pausa/continuar
+  await jogo.debug(1);
+  await jogo.eval(j => (j.battle.run!.inventario.cafe = 3));
+  await segurar('1');
+  expect(await jogo.eval(j => j.battle.run!.inventario.cafe)).toBe(2);
+  await segurar('Escape', 40);
+  expect(await jogo.estado()).toBe('pausa');
+});
+
 test('o PIN pode ser trocado pelo painel (e o antigo deixa de funcionar)', async ({ jogo, page }) => {
   await jogo.abrir();
   await abrirPainel(jogo);

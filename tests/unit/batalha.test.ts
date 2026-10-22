@@ -110,6 +110,93 @@ describe('dano e combo', () => {
     expect(9999 - e.hp).toBe(Math.round(10 * 1.05 * 2));
   });
 
+  it('pontuação exata: palavra perfeita, palavra sem acento (60%), abate e chefão (AUD-04)', () => {
+    // a pontuação decide o ranking do evento: a fórmula precisa estar travada por teste
+    const t = novaBatalha(2, { crit: 0 }); // andar 3: aceita sem acento
+    t.ateInimigos(1);
+    const e = t.vivos()[0];
+    e.hp = e.maxHp = 9999;
+    const pontos = () => t.run.pontos;
+    let antes = pontos();
+    e.texto = 'cabos';
+    e.dig = 0;
+    t.digitar('cabos'); // combo 1 → x1,05 · 5 letras · 10 pontos por letra
+    expect(pontos() - antes).toBe(Math.round(5 * 10 * 1.05));
+    antes = pontos();
+    e.texto = 'função';
+    e.dig = 0;
+    t.digitar('funcao'); // sem acento: combo continua 1 e vale 60%
+    expect(pontos() - antes).toBe(Math.round(6 * 10 * 1.05 * 0.6));
+    antes = pontos();
+    const conquistasAntes = t.run.conquistas.length;
+    e.hp = 1;
+    e.texto = 'cabos';
+    e.dig = 0;
+    t.digitar('cabos'); // abate no andar 3: + 50 x 3 (+ 300 da conquista "Primeiro Commit")
+    const bonus = (t.run.conquistas.length - conquistasAntes) * 300;
+    expect(pontos() - antes - bonus).toBe(Math.round(5 * 10 * 1.1) + 50 * 3);
+    const t2 = novaBatalha(2, { crit: 0, maxHp: 1e6, hp: 1e6 });
+    t2.ateChefe();
+    const c = t2.b().chefe!;
+    c.hp = 1;
+    antes = t2.run.pontos;
+    t2.digitar(c.texto.slice(c.dig)); // chefão no andar 3: + 500 x 3, mais a frase e as conquistas
+    const conquistas = t2.run.conquistas.length * 300;
+    expect(t2.run.pontos - antes - conquistas).toBe(Math.round(c.texto.length * 10 * 1.05) + 500 * 3);
+  });
+
+  it('palavras e frases longas causam mais dano (AUD-04)', () => {
+    const t = novaBatalha(0, { crit: 0 });
+    t.ateInimigos(1);
+    const e = t.vivos()[0];
+    e.hp = e.maxHp = 9999;
+    e.texto = 'computador'; // 10 letras: +8% por letra acima de 5
+    e.dig = 0;
+    t.digitar('computador');
+    expect(9999 - e.hp).toBe(Math.round(10 * (1 + 5 * 0.08) * 1.05));
+    const t2 = novaBatalha(0, { crit: 0, maxHp: 1e6, hp: 1e6 });
+    t2.ateChefe();
+    const c = t2.b().chefe!;
+    c.hp = c.maxHp = 9999;
+    c.texto = 'abcdefghijklmnop'; // chefão: dano x (letras / 8)
+    c.dig = 0;
+    t2.digitar(c.texto);
+    expect(9999 - c.hp).toBe(Math.round(10 * 2 * 1.05));
+  });
+
+  it('maior combo guarda o recorde mesmo depois de um erro, e as palavras são contadas', () => {
+    const t = novaBatalha(0, { crit: 0 });
+    t.ateInimigos(1);
+    const e = t.vivos()[0];
+    e.hp = e.maxHp = 9999;
+    for (let i = 0; i < 6; i++) {
+      e.texto = 'cabos';
+      e.dig = 0;
+      t.digitar('cabos');
+    }
+    e.texto = 'cabos';
+    e.dig = 0;
+    t.digitar('#');
+    expect(t.b().combo).toBe(0);
+    expect(t.run.stats.maiorCombo).toBe(6);
+    expect(t.run.stats.palavras).toBe(6);
+  });
+
+  it('marco de combo só a cada 10 palavras perfeitas', () => {
+    const t = novaBatalha(0, { crit: 0 });
+    const marcos: number[] = [];
+    t.battle.on('comboMarco', c => marcos.push(c));
+    t.ateInimigos(1);
+    const e = t.vivos()[0];
+    e.hp = e.maxHp = 9999;
+    for (let i = 0; i < 21; i++) {
+      e.texto = 'cabos';
+      e.dig = 0;
+      t.digitar('cabos');
+    }
+    expect(marcos).toEqual([10, 20]);
+  });
+
   it('palavra imperfeita (com erro) não soma combo', () => {
     const t = novaBatalha(0, { crit: 0 });
     t.ateInimigos(1);
@@ -222,6 +309,38 @@ describe('chefões', () => {
     const chefe = t.b().chefe!;
     const ini = (s: string) => s.normalize('NFD')[0];
     capangas.forEach(c => expect(ini(c.texto[c.dig])).not.toBe(ini(chefe.texto[chefe.dig])));
+  });
+
+  it('frase nova do chefão nunca começa com a mesma letra de um capanga (a mira ficaria ambígua)', () => {
+    // Bug da auditoria (AUD-01): o chefão troca de frase a cada golpe, sem conferir os capangas.
+    // Ex.: andar 3, chefão "funciona na minha máquina" + capanga "função": digitar "f" podia
+    // mirar no capanga, e a 5ª letra ("i" no lugar de "ã") virava erro e zerava o combo.
+    const t = novaBatalha(2, { maxHp: 1e6, hp: 1e6, crit: 0 });
+    t.ateChefe();
+    t.simular(22);
+    const chefe = t.b().chefe!;
+    const capanga = t.vivos().find(e => !e.chefe)!;
+    expect(capanga, 'o chefão do andar 3 deveria ter invocado um capanga').toBeDefined();
+    chefe.hp = chefe.maxHp = 1e6;
+    capanga.hp = capanga.maxHp = 1e6;
+    capanga.texto = 'função';
+    capanga.dig = 0;
+    chefe.texto = 'quem escreveu esse código';
+    chefe.dig = 0;
+    chefe.fraseIdx = chefe.frases.indexOf('funciona na minha máquina'); // a próxima frase começa com "f"
+    t.battle.soltarAlvo();
+    t.digitar(chefe.texto);
+    expect(chefe.texto).toBe('funciona na minha máquina');
+    const letra = (s: string, i: number) => s[i].normalize('NFD')[0];
+    for (const o of t.vivos().filter(e => !e.chefe))
+      expect(letra(o.texto, o.dig), `capanga "${o.texto}" disputa a letra com o chefão`).not.toBe(
+        letra(chefe.texto, chefe.dig),
+      );
+    // e digitar a frase do chefão acerta o chefão, sem erro
+    const erros = t.run.stats.erros;
+    t.digitar(chefe.texto.slice(0, 6));
+    expect(t.b().alvo).toBe(chefe);
+    expect(t.run.stats.erros).toBe(erros);
   });
 
   it('truque "acelerar" encurta o intervalo de ataque com a vida baixa', () => {
