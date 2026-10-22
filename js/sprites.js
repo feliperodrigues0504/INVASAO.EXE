@@ -1,0 +1,398 @@
+// =====================================================================
+//  Pixel art desenhada em texto. Cada letra é uma cor da paleta,
+//  '.' é transparente. Os sprites são convertidos em canvas uma vez só.
+// =====================================================================
+
+const SPRITES = {
+  hacker: {
+    pal: { k: '#050805', H: '#2f5c40', h: '#1b3626', s: '#d9a07a', g: '#39ff14', L: '#3b3f45', p: '#1c2533', b: '#0d0d0d' },
+    grid: [
+      '.....kkkkkk.....',
+      '....kHHHHHHk....',
+      '...kHhhhhhhHk...',
+      '...kHhkkkkkhk...',
+      '...kHkssssskk...',
+      '...kHksgssgsk...',
+      '...kHkssssssk...',
+      '....kHkssssk....',
+      '....khhkkkkhk...',
+      '...kHhhhhhhhhk..',
+      '..kHhhhhhhhhhhk.',
+      '..kHhhsskLLLLLLk',
+      '..kHhhhhkLgggggLk',
+      '...khhhhkLLLLLLk',
+      '....kppppkkkkkk.',
+      '....kppkppk.....',
+      '....kppkppk.....',
+      '...kbbbkbbbk....',
+    ],
+  },
+
+  // ---------------- inimigos comuns (A/B são trocadas por andar) ----------------
+  bug: {
+    pal: { k: '#050805', A: '#7CFF4F', B: '#2E8B2E', w: '#ffffff' },
+    grid: [
+      '..k......k..',
+      '...k....k...',
+      '...kkkkkk...',
+      '..kAAAAAAk..',
+      '.kAwkAAwkAk.',
+      'kkAAAAAAAAkk',
+      '..kBBkkBBk..',
+      'kkBBBkkBBBkk',
+      '..kBBkkBBk..',
+      'kkBBBkkBBBkk',
+      '..kkBBBBkk..',
+      '...k.kk.k...',
+    ],
+  },
+  virus: {
+    pal: { k: '#050805', A: '#7CFF4F', B: '#2E8B2E', w: '#ffffff' },
+    grid: [
+      '.....AA.....',
+      '.A...AA...A.',
+      '..AkkkkkkA..',
+      '..kBBBBBBk..',
+      'AAkBwkBwkBAA',
+      'AAkBBBBBBkAA',
+      '..kBkBkBkk..',
+      '..kBBBBBBk..',
+      '..AkkkkkkA..',
+      '.A...AA...A.',
+      '.....AA.....',
+    ],
+  },
+  glitch: {
+    pal: { k: '#050805', A: '#7CFF4F', B: '#2E8B2E', w: '#ffffff' },
+    grid: [
+      'AAAA.BBB.AAA',
+      'A..ABBBBBA.A',
+      'ABBBBBBBBBBA',
+      '.BBwwBBwwBB.',
+      'ABBwkBBwkBBA',
+      'ABBBBBBBBBB.',
+      '.BBkBkBkBBBA',
+      'ABBBkBkBkBBA',
+      'A.BBBBBBBB.A',
+      'AAA.BBBB.AAA',
+    ],
+  },
+  email: {
+    pal: { k: '#050805', A: '#7CFF4F', B: '#2E8B2E', w: '#ffffff' },
+    grid: [
+      'kkkkkkkkkkkk',
+      'kBkAAAAAAkBk',
+      'kAAkAAAAkAAk',
+      'kAAAkAAkAAAk',
+      'kAAAAkkAAAAk',
+      'kAAAAAAAAAAk',
+      'kAwkAAAAwkAk',
+      'kAAAAAAAAAAk',
+      'kAAkkkkkkAAk',
+      'kkkkkkkkkkkk',
+      '.....k......',
+      '....kk..k...',
+      '.....kkk....',
+    ],
+  },
+  worm: {
+    pal: { k: '#050805', A: '#7CFF4F', B: '#2E8B2E', w: '#ffffff' },
+    grid: [
+      '......kkkk..',
+      '.....kAAAAk.',
+      '....kAwkAwk.',
+      '....kAAAAAk.',
+      'kk..kABABk..',
+      'kBkkABABk...',
+      'kABABABk....',
+      '.kBABAk.....',
+      '..kkkk......',
+    ],
+  },
+  pacote: {
+    pal: { k: '#050805', A: '#7CFF4F', B: '#2E8B2E', w: '#ffffff' },
+    grid: [
+      '...kkkkkkk..',
+      '..kAAAAAAkk.',
+      '.kAAAAAAkBk.',
+      'kkkkkkkkBBk.',
+      'kAAAAAAkBBk.',
+      'kAwkAwkkBBk.',
+      'kAAAAAAkBBk.',
+      'kAkkkkAkBk..',
+      'kAAAAAAkk...',
+      'kkkkkkkk....',
+    ],
+  },
+
+  // ---------------- chefões ----------------
+  impressora: {
+    pal: { k: '#050805', W: '#f0f0f0', G: '#c8c8c8', L: '#8a9096', D: '#4d5359', r: '#ff2244', R: '#ff99aa', g: '#39ff14' },
+    grid: [
+      '........kkkkkkkk........',
+      '........kWWWWWWk........',
+      '........kWkkkkWk........',
+      '........kWWWWWWk........',
+      '........kWkkkWWk........',
+      '...kkkkkkkkkkkkkkkkkk...',
+      '..kGGGGGGGGGGGGGGGGGGk..',
+      '..kGLLLLLLLLLLLLLLLLGk..',
+      '..kGLrrLLLLLLLLLLrrLGk..',
+      '..kGLLrrrLLLLLLrrrLLGk..',
+      '..kGLLRRRLLLLLLRRRLLGk..',
+      '..kGLLLLLLLLLLLLLLLLGk..',
+      '..kGGGGGGGGGGGGGGGGGGk..',
+      '..kDDDDDDDDDDDDDDDDDDk..',
+      '..kDkkkkkkkkkkkkkkkkDk..',
+      '..kDkWkWkWkWkWkWkWkkDk..',
+      '..kDDDDDDDDDDDDDDDDDDk..',
+      '..kGGGGGGGGGGGGgGgGGGk..',
+      '..kGGGGGGGGGGGGGGGGGGk..',
+      '...kkkkkkkkkkkkkkkkkk...',
+      '....kk............kk....',
+    ],
+  },
+  bsod: {
+    pal: { k: '#050805', G: '#2b2b2b', B: '#0a3dd6', W: '#ffffff' },
+    grid: [
+      'kkkkkkkkkkkkkkkkkkkkkkkk',
+      'kGGGGGGGGGGGGGGGGGGGGGGk',
+      'kGBBBBBBBBBBBBBBBBBBBBGk',
+      'kGBBBBBBBBBBBBBBBBBBBBGk',
+      'kGBBBWWBBBBBBBBWWWBBBBGk',
+      'kGBBBWWBBBBBBBWBBBBBBBGk',
+      'kGBBBBBBBBBBBWBBBBBBBBGk',
+      'kGBBBBBBBBBBBWBBBBBBBBGk',
+      'kGBBBWWBBBBBBWBBBBBBBBGk',
+      'kGBBBWWBBBBBBBWBBBBBBBGk',
+      'kGBBBBBBBBBBBBBWWWBBBBGk',
+      'kGBBBBBBBBBBBBBBBBBBBBGk',
+      'kGBWWWWWWWWWWWBBBBBBBBGk',
+      'kGBBBBBBBBBBBBBBBBBBBBGk',
+      'kGBWWWWWWWBBBBBBBBBBBBGk',
+      'kGBBBBBBBBBBBBBBBBBBBBGk',
+      'kGGGGGGGGGGGGGGGGGGGGGGk',
+      'kkkkkkkkkkGGGGkkkkkkkkkk',
+      '..........kGGk..........',
+      '........kkGGGGkk........',
+      '......kkGGGGGGGGkk......',
+      '......kkkkkkkkkkkk......',
+    ],
+  },
+  bugrei: {
+    pal: { k: '#050805', y: '#ffd700', r: '#ff2244', A: '#b3202a', B: '#6e1018', w: '#ffffff' },
+    grid: [
+      '........y..y..y.........',
+      '........yyyyyyyy........',
+      '........yryyyyry........',
+      '...k....kkkkkkkk....k...',
+      '....k..kAAAAAAAAk..k....',
+      '.....kkAAAAAAAAAAkk.....',
+      '.....kAAwwAAAAwwAAk.....',
+      '.....kAAwkAAAAwkAAk.....',
+      '.....kAAAAAAAAAAAAk.....',
+      '....kkkAAkkkkkkAAkkk....',
+      '.kkk.kBBBBBkkBBBBBk.kkk.',
+      '....kBBBBBBkkBBBBBBk....',
+      '.kkkkBBBBBBkkBBBBBBkkkk.',
+      '....kBBBrBBkkBBrBBBk....',
+      '....kBBBBBBkkBBBBBBk....',
+      '.kkkkBBBBBBkkBBBBBBkkkk.',
+      '....kBBBBBBkkBBBBBBk....',
+      '.kkk.kBBBBBkkBBBBBk.kkk.',
+      '......kBBBBkkBBBBk......',
+      '.......kkkkkkkkkk.......',
+    ],
+  },
+  database: {
+    pal: { k: '#050805', C: '#4fa3ff', D: '#2b6cb0', r: '#ff2244', R: '#ff99aa', W: '#ffffff' },
+    grid: [
+      '......kkkkkkkkkkkk......',
+      '....kkCCCCCCCCCCCCkk....',
+      '...kCCCCCCCCCCCCCCCCk...',
+      '...kDCCCCCCCCCCCCCCDk...',
+      '...kDDDDCCCCCCCCDDDDk...',
+      '...kCDDDDDDDDDDDDDDCk...',
+      '...kCCrrCCCCCCCCrrCCk...',
+      '...kCCCrrrCCCCrrrCCCk...',
+      '...kCCCRRRCCCCRRRCCCk...',
+      '...kDCCCCCCCCCCCCCCDk...',
+      '...kDDDDCCCCCCCCDDDDk...',
+      '...kCDDDDDDDDDDDDDDCk...',
+      '...kCCCCkkkkkkkkCCCCk...',
+      '...kCCCkWkWkWkWkkCCCk...',
+      '...kCCCCkkkkkkkkCCCCk...',
+      '...kDCCCCCCCCCCCCCCDk...',
+      '...kDDDDCCCCCCCCDDDDk...',
+      '....kkDDDDDDDDDDDDkk....',
+      '......kkkkkkkkkkkk......',
+    ],
+  },
+  wifi: {
+    pal: { k: '#050805', A: '#555b61', W: '#00e5ff', G: '#3a3f47', D: '#22262c', r: '#ff2244', R: '#ff99aa', l: '#39ff14' },
+    grid: [
+      '...k................k...',
+      '..kAk.....WWWW.....kAk..',
+      '..kAk...WW....WW...kAk..',
+      '..kAk..W..WWWW..W..kAk..',
+      '..kAk....W....W....kAk..',
+      '..kAk......WW......kAk..',
+      '..kAk......WW......kAk..',
+      '..kAk..............kAk..',
+      '.kkkkkkkkkkkkkkkkkkkkkk.',
+      'kGGGGGGGGGGGGGGGGGGGGGGk',
+      'kGGGrrGGGGGGGGGGGGrrGGGk',
+      'kGGGGrrrGGGGGGGGrrrGGGGk',
+      'kGGGGRRRGGGGGGGGRRRGGGGk',
+      'kGGGGGGGGGkkkkGGGGGGGGGk',
+      'kGGGGGGGGkGGGGkGGGGGGGGk',
+      'kDDDDDDDDDDDDDDDDDDDDDDk',
+      'kDlDlDlDlDDDDDDDDDDDDDDk',
+      'kDDDDDDDDDDDDDDDDDDDDDDk',
+      '.kkkkkkkkkkkkkkkkkkkkkk.',
+      '..kk..............kk....',
+    ],
+  },
+  servidor: {
+    pal: { k: '#050805', f: '#ff4500', F: '#ff8c00', Y: '#ffd700', S: '#3a3f47', g: '#39ff14', r: '#ff2244', R: '#ff99aa', W: '#ffffff' },
+    grid: [
+      '.....f...f....f...f.....',
+      '....fFf.fFf..fFf.fFf....',
+      '...fFYFfFYFffFYFfFYFf...',
+      '..ffFYYFYYFFFFYYFYYFff..',
+      '..kkkkkkkkkkkkkkkkkkkk..',
+      '..kSSSSSSSSSSSSSSSSSSk..',
+      '..kSkkkkkkkkkkkkkkkkSk..',
+      '..kSkgkgkkkkkkkkkrkkSk..',
+      '..kSkkkkkkkkkkkkkkkkSk..',
+      '..kSSSSSSSSSSSSSSSSSSk..',
+      '..kSSrrSSSSSSSSSSrrSSk..',
+      '..kSSSrrrSSSSSSrrrSSSk..',
+      '..kSSSRRRSSSSSSRRRSSSk..',
+      '..kSSSSSSSSSSSSSSSSSSk..',
+      '..kSkkkkkkkkkkkkkkkkSk..',
+      '..kSkrkrkkkkkkkkkgkkSk..',
+      '..kSkkkkkkkkkkkkkkkkSk..',
+      '..kSSSSSSSSSSSSSSSSSSk..',
+      '..kSSSSSkkkkkkkkSSSSSk..',
+      '..kSSSSkWkWkWkWkkSSSSk..',
+      '..kSSSSSkkkkkkkkSSSSSk..',
+      '..kkkkkkkkkkkkkkkkkkkk..',
+      '...kk..............kk...',
+    ],
+  },
+  ransomware: {
+    pal: { k: '#050805', W: '#e8e8d0', r: '#ff2244', Y: '#ffd700' },
+    grid: [
+      '......kkkkkkkkkkkk......',
+      '....kkWWWWWWWWWWWWkk....',
+      '...kWWWWWWWWWWWWWWWWk...',
+      '..kWWWWWWWWWWWWWWWWWWk..',
+      '..kWWkkkkWWWWWWkkkkWWk..',
+      '..kWkkrrkkWWWWkkrrkkWk..',
+      '..kWkkrrkkWWWWkkrrkkWk..',
+      '..kWWkkkkWWWWWWkkkkWWk..',
+      '..kWWWWWWWWkkWWWWWWWWk..',
+      '...kWWWWWWkkkkWWWWWWk...',
+      '....kWWWWWWWWWWWWWWk....',
+      '....kWkWkWkWkWkWkWWk....',
+      '....kWWWWWWWWWWWWWWk....',
+      '.....kkkkkkkkkkkkkk.....',
+      '.........kYYYYk.........',
+      '........kY....Yk........',
+      '........kY....Yk........',
+      '.......kYYYYYYYYk.......',
+      '.......kYYYkkYYYk.......',
+      '.......kYYYkkYYYk.......',
+      '.......kYYYYYYYYk.......',
+      '........kkkkkkkk........',
+    ],
+  },
+  robo: {
+    pal: { k: '#050805', M: '#8a94a6', V: '#111418', r: '#ff2244', R: '#ff99aa', g: '#39ff14', D: '#4a5160' },
+    grid: [
+      '...........kk...........',
+      '..........krRk..........',
+      '...........kk...........',
+      '...........kk...........',
+      '....kkkkkkkkkkkkkkkk....',
+      '...kMMMMMMMMMMMMMMMMk...',
+      '..kMMMMMMMMMMMMMMMMMMk..',
+      '.kkMkkkkkkkkkkkkkkkkMkk.',
+      'kMkMkVVVVVVVVVVVVVVkMkMk',
+      'kMkMkVVrrrVVVVVVVVVkMkMk',
+      'kMkMkVrRRRrVVVVVVVVkMkMk',
+      'kMkMkVVrrrVVVVVVVVVkMkMk',
+      '.kkMkkkkkkkkkkkkkkkkMkk.',
+      '..kMMMMMMMMMMMMMMMMMMk..',
+      '..kMMMkgkgkgkgkgkgMMMk..',
+      '..kMMMMMMMMMMMMMMMMMMk..',
+      '...kMMMMMMMMMMMMMMMMk...',
+      '....kkkkkkkkkkkkkkkk....',
+      '......kMMMMMMMMMMk......',
+      '.....kDDDDDDDDDDDDk.....',
+      '....kkkkkkkkkkkkkkkk....',
+    ],
+  },
+  prazo: {
+    pal: { k: '#050805', H: '#ff2244', W: '#f5f5f5', r: '#ff2244', R: '#ff99aa', Y: '#ffd700' },
+    grid: [
+      '..kk................kk..',
+      '..kHk..............kHk..',
+      '...kHk....kkkk....kHk...',
+      '....kHkkkkYYYYkkkkHk....',
+      '.....kkWWWWWWWWWWkk.....',
+      '....kWWWWWWkkWWWWWWk....',
+      '...kWWWWWWWkkWWWWWWWk...',
+      '...kWWrrWWWkkWWWrrWWk...',
+      '..kWWWWrrrWkkWrrrWWWWk..',
+      '..kWWWWRRRWkkWRRRWWWWk..',
+      '..kWWWWWWWWkkkkkkkWWWk..',
+      '..kWWWWWWWWWWWWWWWWWWk..',
+      '..kWWWWWkkkkkkkkWWWWWk..',
+      '...kWWWkrrrrrrrrkWWWk...',
+      '...kWWWWkkkkkkkkWWWWk...',
+      '....kWWWWWWWWWWWWWWk....',
+      '.....kkWWWWWWWWWWkk.....',
+      '.......kkkkkkkkkk.......',
+      '......kk........kk......',
+      '.....kk..........kk.....',
+    ],
+  },
+};
+
+const Sprites = (() => {
+  const cache = {};
+
+  // Gera { canvas, flash, w, h, pixels } — pixels serve para a explosão em partículas
+  function get(name, scale, palOverride) {
+    const key = name + '|' + scale + '|' + (palOverride ? JSON.stringify(palOverride) : '');
+    if (cache[key]) return cache[key];
+    const def = SPRITES[name];
+    const pal = Object.assign({}, def.pal, palOverride || {});
+    const h = def.grid.length;
+    const w = Math.max(...def.grid.map(r => r.length));
+    const canvas = document.createElement('canvas');
+    const flash = document.createElement('canvas');
+    canvas.width = flash.width = w * scale;
+    canvas.height = flash.height = h * scale;
+    const ctx = canvas.getContext('2d');
+    const fctx = flash.getContext('2d');
+    fctx.fillStyle = '#ffffff';
+    const pixels = [];
+    for (let y = 0; y < h; y++) {
+      const row = def.grid[y];
+      for (let x = 0; x < row.length; x++) {
+        const color = pal[row[x]];
+        if (!color) continue;
+        ctx.fillStyle = color;
+        ctx.fillRect(x * scale, y * scale, scale, scale);
+        fctx.fillRect(x * scale, y * scale, scale, scale);
+        pixels.push({ x: x * scale, y: y * scale, c: color });
+      }
+    }
+    return (cache[key] = { canvas, flash, w: w * scale, h: h * scale, pixels, scale });
+  }
+
+  return { get };
+})();

@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>INVASÃO.EXE — RPG de Digitação</title>
+  <!-- 100% offline: as fontes ficam em fonts/ (nada é baixado da internet) -->
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="game">
+    <canvas id="canvas" width="960" height="540"></canvas>
+
+    <!-- HUD da batalha -->
+    <div id="hud" class="hidden">
+      <div id="hud-top">
+        <span id="hud-nick"></span>
+        <span id="hud-andar"></span>
+        <span id="hud-score"></span>
+        <span id="hud-cred"></span>
+      </div>
+      <div id="hud-player">
+        <div class="hud-label">INTEGRIDADE</div>
+        <div class="bar"><div id="hp-fill" class="bar-fill"></div><span id="hp-text"></span></div>
+        <div id="hud-status"></div>
+      </div>
+      <div id="hud-combo"></div>
+      <div id="log"></div>
+      <div id="prompt">
+        <span class="prompt-user">root@empresa:~$</span>
+        <span id="prompt-text"></span><span class="caret">█</span>
+      </div>
+      <div id="items"></div>
+    </div>
+
+    <!-- Banner de fase / chefão -->
+    <div id="banner" class="hidden">
+      <div id="banner-top"></div>
+      <div id="banner-title"></div>
+      <div id="banner-sub"></div>
+      <div id="banner-tip"></div>
+    </div>
+
+    <!-- Tela título -->
+    <div id="screen-title" class="screen hidden">
+      <div class="title-wrap">
+        <div class="title-event" id="title-event"></div>
+        <h1 class="glitch" data-text="INVASÃO.EXE">INVASÃO.EXE</h1>
+        <div class="title-sub">um RPG de digitação hacker</div>
+        <div class="title-course" id="title-course"></div>
+        <div class="blink press">[ PRESSIONE ENTER PARA INVADIR ]</div>
+      </div>
+      <div class="title-rank">
+        <div class="panel-title">// TOP HACKERS</div>
+        <div class="rank-modo">NORMAL</div>
+        <ol id="title-rank-normal"></ol>
+        <div class="rank-modo">RÁPIDO</div>
+        <ol id="title-rank-rapido"></ol>
+      </div>
+    </div>
+
+    <!-- Tela de nick -->
+    <div id="screen-nick" class="screen hidden">
+      <div class="terminal-box">
+        <div class="term-lines" id="nick-lines"></div>
+        <div class="nick-row">
+          <span class="prompt-user">nick&gt;</span>
+          <input id="nick-input" maxlength="30" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        </div>
+        <div id="nick-error"></div>
+        <div class="hint">máx. 30 caracteres — ENTER para confirmar</div>
+      </div>
+    </div>
+
+    <!-- Escolha do modo -->
+    <div id="screen-mode" class="screen hidden">
+      <div class="panel-title center">// ESCOLHA O MODO DE JOGO</div>
+      <div id="modos">
+        <div class="modo" data-modo="normal">
+          <div class="card-key">[1]</div>
+          <div class="modo-nome">NORMAL</div>
+          <div class="modo-desc" id="modo-desc-normal"></div>
+        </div>
+        <div class="modo rapido" data-modo="rapido">
+          <div class="card-key">[2]</div>
+          <div class="modo-nome">RÁPIDO</div>
+          <div class="modo-desc" id="modo-desc-rapido"></div>
+        </div>
+      </div>
+      <div class="hint center">pressione 1 ou 2 (ou clique) — ESC volta</div>
+    </div>
+
+    <!-- Tutorial -->
+    <div id="screen-tutorial" class="screen hidden">
+      <div class="terminal-box wide">
+        <div class="panel-title">// MANUAL DO HACKER</div>
+        <ul class="tutorial-list">
+          <li><b>DIGITE</b> a palavra que aparece sobre um inimigo para atacá-lo.</li>
+          <li>Cada palavra completa causa <b>dano</b>. Inimigos mais fortes precisam de várias palavras.</li>
+          <li>Acertar sem errar aumenta o <b>COMBO</b> e o seu dano. Errar zera o combo!</li>
+          <li>Fique de olho na <span class="red">barra vermelha</span>: quando enche, o inimigo ataca.</li>
+          <li><b>BACKSPACE</b> troca de alvo &nbsp;·&nbsp; <b>1 2 3 4</b> usam itens &nbsp;·&nbsp; <b>ESC</b> pausa.</li>
+          <li>Cada andar tem um <b>CHEFÃO</b>. Ao vencer, escolha um upgrade e visite a loja.</li>
+          <li>Desbloqueie <b>★ conquistas</b> (+300 pontos cada) e veja seu <b>relatório</b> no final.</li>
+          <li>Quanto mais alto você chega, mais <b>acentos</b> aparecem: á é í ó ú â ê ô ã õ ç</li>
+        </ul>
+        <div class="blink press">[ ENTER PARA COMEÇAR A INVASÃO ]</div>
+      </div>
+    </div>
+
+    <!-- Andar concluído -->
+    <div id="screen-clear" class="screen hidden">
+      <div class="terminal-box wide">
+        <div class="panel-title" id="clear-title"></div>
+        <div id="clear-stats"></div>
+        <div class="fact">
+          <div class="fact-title">&gt; VOCÊ SABIA?</div>
+          <div id="clear-fact"></div>
+        </div>
+        <div class="blink press">[ ENTER PARA CONTINUAR ]</div>
+      </div>
+    </div>
+
+    <!-- Upgrade -->
+    <div id="screen-upgrade" class="screen hidden">
+      <div class="panel-title center">// ESCOLHA UM UPGRADE</div>
+      <div id="cards"></div>
+      <div class="hint center">pressione 1, 2 ou 3 (ou clique)</div>
+    </div>
+
+    <!-- Loja -->
+    <div id="screen-shop" class="screen hidden">
+      <div class="terminal-box wide">
+        <div class="shop-head">
+          <div class="panel-title">// DARK MARKET</div>
+          <div id="shop-cred"></div>
+        </div>
+        <div id="shop-list"></div>
+        <div id="shop-msg"></div>
+        <div class="hint">1-4 compra (máx. 3 de cada) — ENTER para subir ao próximo andar</div>
+      </div>
+    </div>
+
+    <!-- Pausa -->
+    <div id="screen-pause" class="screen hidden">
+      <div class="terminal-box">
+        <div class="panel-title">// PROCESSO SUSPENSO</div>
+        <div class="menu">
+          <div>[1] Continuar</div>
+          <div id="pause-sound">[2] Som: ON</div>
+          <div>[3] Desistir</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Fim de jogo -->
+    <div id="screen-end" class="screen hidden">
+      <div class="terminal-box wide">
+        <div class="end-title" id="end-title"></div>
+        <div id="end-sub"></div>
+        <div id="end-stats"></div>
+        <div id="end-rank"></div>
+        <div class="blink press">[ ENTER PARA VER SEU RELATÓRIO ]</div>
+      </div>
+    </div>
+
+    <!-- Relatório de desempenho -->
+    <div id="screen-report" class="screen hidden">
+      <div class="terminal-box wide report">
+        <div class="panel-title" id="rel-titulo"></div>
+        <div class="rel-cols">
+          <div class="rel-col-esq">
+            <div class="rel-sub">VELOCIDADE E PRECISÃO POR ANDAR</div>
+            <div id="rel-barras"></div>
+          </div>
+          <div class="rel-col-dir">
+            <div class="rel-sub">TECLAS QUE MAIS TE DERRUBARAM</div>
+            <div id="rel-teclas"></div>
+            <div id="rel-resumo"></div>
+          </div>
+        </div>
+        <div class="rel-sub">CONQUISTAS <span id="rel-conq-n"></span></div>
+        <div id="rel-conquistas"></div>
+        <div id="rel-insight"></div>
+        <div class="blink press">[ ENTER PARA VER O RANKING ]</div>
+      </div>
+    </div>
+
+    <!-- Ranking -->
+    <div id="screen-ranking" class="screen hidden">
+      <div class="terminal-box wide">
+        <div class="panel-title" id="rank-title">// RANKING DE HACKERS</div>
+        <table id="rank-table"></table>
+        <div class="blink press">[ ENTER PARA VOLTAR ]</div>
+      </div>
+    </div>
+
+    <!-- Painel do organizador (Ctrl+Shift+O na tela título) -->
+    <div id="screen-pin" class="screen hidden">
+      <div class="terminal-box">
+        <div class="panel-title">// ACESSO DO ORGANIZADOR</div>
+        <div class="nick-row">
+          <span class="prompt-user">PIN&gt;</span>
+          <input id="pin-input" type="password" maxlength="12" autocomplete="off">
+        </div>
+        <div id="pin-error"></div>
+        <div class="hint">ENTER confirma — ESC volta ao jogo</div>
+      </div>
+    </div>
+
+    <div id="screen-panel" class="screen hidden">
+      <div class="terminal-box wide">
+        <div class="panel-title">// PAINEL DO ORGANIZADOR</div>
+        <div id="painel-stats"></div>
+        <div id="painel-menu" class="menu"></div>
+        <div id="painel-msg"></div>
+      </div>
+    </div>
+
+    <div id="toast" class="hidden"></div>
+    <div id="flash"></div>
+    <div id="crt"></div>
+    <input id="type-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/sprites.js"></script>
+  <script src="js/sound.js"></script>
+  <script src="js/ranking.js"></script>
+  <script src="js/fx.js"></script>
+  <script src="js/battle.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
