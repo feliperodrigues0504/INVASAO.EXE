@@ -1,0 +1,18 @@
+# Atualizações automáticas de dependências (abre PRs mensais; a CI testa cada uma)
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      ferramentas:
+        patterns: ['*']
+  - package-ecosystem: cargo
+    directory: /src-tauri
+    schedule:
+      interval: monthly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
