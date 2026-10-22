@@ -41,7 +41,7 @@ test('resistência: 12 min jogando sem parar, ciclo fim → ranking → título 
   page.on('console', m => {
     if (m.text().includes('[INVASAO] fim de jogo')) fins++;
   });
-  await jogo.abrir('?render=10&bot=400&semente=21');
+  await jogo.abrir('?render=30&bot=400&semente=21');
   for (let seg = 0; seg < 12 * 60; seg += 10) await jogo.avancar(10_000);
   expect(fins, 'partidas terminadas em 12 min').toBeGreaterThanOrEqual(2);
 });

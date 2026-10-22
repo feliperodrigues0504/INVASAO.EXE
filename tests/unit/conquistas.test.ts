@@ -47,6 +47,40 @@ describe('conquistas', () => {
     expect(t.run.conquistas).toEqual(expect.arrayContaining(['primeiro', 'investidor']));
   });
 
+  it('combo x10 e x20 só desbloqueiam ao atingir o número exato (AUD-04)', () => {
+    const t = novaBatalha(0, { crit: 0 });
+    t.ateInimigos(1);
+    const e = t.vivos()[0];
+    e.hp = e.maxHp = 1e6;
+    const palavra = () => {
+      e.texto = 'cabos';
+      e.dig = 0;
+      t.digitar('cabos');
+    };
+    for (let i = 0; i < 9; i++) palavra();
+    expect(t.run.conquistas).not.toContain('combo10');
+    palavra();
+    expect(t.run.conquistas).toContain('combo10');
+    for (let i = 0; i < 9; i++) palavra();
+    expect(t.run.conquistas).not.toContain('combo20');
+    palavra();
+    expect(t.run.conquistas).toContain('combo20');
+  });
+
+  it('"Fibra Óptica" vale só para frase de chefão (palavra de inimigo comum não conta)', () => {
+    const t = novaBatalha(0, { crit: 0 });
+    t.ateInimigos(1);
+    const e = t.vivos()[0];
+    e.hp = e.maxHp = 1e6;
+    e.texto = 'computadores';
+    e.dig = 0;
+    for (const ch of e.texto) {
+      t.battle.digitar(ch);
+      t.battle.atualizar(0.06); // ~200 ppm
+    }
+    expect(t.run.conquistas).not.toContain('veloz');
+  });
+
   it('chefão perfeito (limpo, intocável, raiz, acentos) e "por um fio"', () => {
     const t = novaBatalha(4, { maxHp: 1e6, hp: 1e6 });
     t.ateChefe();

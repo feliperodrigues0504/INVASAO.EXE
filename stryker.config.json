@@ -1,19 +1,40 @@
 {
   "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
-  "_comment": "Teste de mutação: o Stryker injeta pequenos bugs (troca < por <=, apaga um if, inverte um booleano...) na lógica do jogo e confere se os testes de unidade REPROVAM cada um. Mutante que sobrevive = ponto cego dos testes. Rode com: npm run test:mutation (relatório em reports/mutation/mutation.html).",
+  "_comment": "Teste de mutação: o Stryker injeta pequenos bugs (troca < por <=, apaga um if, inverte um booleano...) na lógica do jogo e confere se os testes de unidade REPROVAM cada um. Mutante que sobrevive = ponto cego dos testes. Rode com: npm run test:mutation (relatório em reports/mutation/mutation.html). ATENÇÃO: o Stryker 10 não ativa mutantes com o Vitest 5 (todos \"sobrevivem\" sem rodar teste nenhum); por isso o Vitest fica fixado na 4.x.",
   "testRunner": "vitest",
   "plugins": ["@stryker-mutator/vitest-runner"],
   "mutate": [
     "src/game/**/*.ts",
     "src/storage/**/*.ts",
     "src/content/**/*.ts",
+    "!src/content/sprites.ts",
     "!src/storage/backup.ts",
     "!src/storage/armazenamento.ts"
   ],
-  "reporters": ["clear-text", "progress", "html"],
-  "htmlReporter": { "fileName": "reports/mutation/mutation.html" },
+  "reporters": ["clear-text", "progress", "html", "json"],
+  "htmlReporter": {
+    "fileName": "reports/mutation/mutation.html"
+  },
   "coverageAnalysis": "perTest",
-  "thresholds": { "high": 85, "low": 70, "break": 65 },
+  "thresholds": {
+    "high": 85,
+    "low": 70,
+    "break": 65
+  },
   "timeoutMS": 30000,
-  "concurrency": 4
+  "concurrency": 4,
+  "ignoreStatic": true,
+  "ignorePatterns": [
+    "dist",
+    "coverage",
+    "reports",
+    "playwright-report",
+    "test-results*",
+    "tests/e2e",
+    "src-tauri",
+    "scripts",
+    "_*.log",
+    ".github",
+    "docs"
+  ]
 }
