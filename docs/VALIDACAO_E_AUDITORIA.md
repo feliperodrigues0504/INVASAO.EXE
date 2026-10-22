@@ -27,7 +27,7 @@ O que cada etapa cobre (equivalência com o antigo `validar.ps1`):
    validado por schema (`tests/unit/conteudo.test.ts`), inclusive referências cruzadas.
 2. **Sem internet** → todo teste E2E **bloqueia a rede** e reprova qualquer acesso externo; o build é um
    único `dist/index.html` aberto via `file://`, como no evento.
-3. **Bateria de testes** → 140 testes de unidade (Vitest) + 37 testes E2E (Playwright) com teclado real,
+3. **Bateria de testes** → 169 testes de unidade (Vitest) + 38 testes E2E (Playwright) com teclado real,
    acentos ABNT2, quiosque, painel, layout no pior caso, segurança e **fuzz de 3000 teclas**.
 4. **Desempenho em tempo real** → `tests/e2e/desempenho.spec.ts`: cena mais pesada, sem GPU, em 960×540 e
    1920×1080; orçamento de 16,6 ms por quadro (60 fps).
@@ -153,6 +153,23 @@ M11, M12...) agora são gerados automaticamente pelo Stryker sobre `src/game` e 
 (conquistas que não vazam, PIN, CSV, colar bloqueado, inatividade, confirmação de apagar, tecla morta,
 pausa na vitória).
 
+### Auditoria de bugs da versão 3 (22/10/2026)
+
+Revisão manual de todo o código + teste de mutação (Stryker) para achar o que os testes não vigiavam.
+Cada bug ganhou um teste que reprova o código antigo (controle negativo feito para todos).
+
+| ID | Sev. | Área | Problema encontrado | Correção | Coberto por | Status |
+|---|---|---|---|---|---|---|
+| AUD-05 | **Alta** | Painel / teclado | **Segurar a tecla 5 no painel apagava o ranking inteiro**: o teclado repete a tecla segurada (~0,5 s depois), e a repetição contava como a "2ª vez" da confirmação. Na batalha, segurar 1 gastava todos os cafés e segurar ESC ficava alternando pausa/continuar. **Já existia na versão original** | Teclas repetidas (`repeat`) não disparam ações de menu, item ou pausa; letras seguradas continuam digitando | E2E *SEGURAR uma tecla não repete a ação* | ✅ Corrigido |
+| AUD-01 | Média | Batalha | A frase nova do chefão (a cada golpe) não era conferida contra os capangas: "funciona na minha máquina" × capanga "função" (andar 3). Digitar "f" podia mirar no capanga, e a 5ª letra virava erro e zerava o combo | Ao trocar de frase, o capanga em conflito (ainda não começado) recebe outra palavra | teste *frase nova do chefão nunca começa com a mesma letra de um capanga* | ✅ Corrigido |
+| AUD-02 | Média | Ranking / CSV | O CSV usava horário UTC: exportado às 21:30 em Brasília, o arquivo saía com a data do **dia seguinte** e as partidas com 00:30 | Nome do arquivo e coluna `data` em horário local (`dd/mm/aaaa hh:mm`); o armazenamento continua em ISO | 3 testes *datas do CSV no horário local* | ✅ Corrigido |
+| AUD-03 | Média | Segurança | **Injeção de fórmula no Excel**: um nick adulterado como `=HIPERLINK(...)` (ou `-A1`, `@SOMA`) virava fórmula ativa ao abrir o CSV | Texto que começa com `= + - @` ganha um apóstrofo (padrão OWASP) | teste *nick que começa com = + - @ não vira fórmula* | ✅ Corrigido |
+| AUD-04 | Média | Testes | Pontos cegos revelados pela mutação: **fórmula de pontuação** (decide o ranking), contagem de acertos/erros (PPM e precisão), dano por tamanho de palavra, limiar das conquistas, efeito real do café/SSD/VPN, Mineração, Garbage Collector, limite de inimigos na tela | 28 testes novos (`tests/unit/regras.test.ts` + batalha/conquistas) | mutação: 60% → **69,9%** | ✅ Coberto |
+| AUD-06 | Média | Ferramenta | **O teste de mutação não testava nada**: com o Vitest 5, o Stryker 10 não ativava os mutantes (todos "sobreviviam" com 0 testes rodados; `battle.ts` dava 0,6%). Sem a auditoria, a CI semanal reprovaria sempre ou, pior, alguém baixaria o limite. Também mutava os sprites (dados) e copiava pastas de relatório | Vitest fixado na 4.x (Dependabot não sobe a versão maior); sprites fora da mutação; `ignorePatterns` | controle: bug injetado à mão foi pego pelos testes mas não pelo Stryker | ✅ Corrigido |
+
+Observado e **não alterado** (risco baixo, decisão de design): com o upgrade Autocomplete, digitar a 1ª letra
+"por hábito" escolhe o primeiro inimigo cuja palavra começa com ela, mesmo que dois comecem igual.
+
 ---
 
 ## 4. Rodadas de validação
@@ -262,3 +279,8 @@ monitor do evento, versão do navegador, limpar o ranking antes de abrir o estan
     vários lotes (o ruído só atrasa, nunca adianta) e rodar o teste de desempenho sozinho, depois dos outros.
 26. **Mudou o visual de propósito?** Atualizar as referências (`npm run test:e2e:update`) e **olhar** as
     imagens novas no diff antes de commitar (lição 12).
+27. **Teste de mutação também precisa de controle negativo**: um placar ruim pode ser a ferramenta, não os
+    testes (AUD-06). Injetar um bug à mão; se os testes pegam e o Stryker não, a configuração está errada.
+28. **Teclas seguradas repetem**: toda ação de confirmação ("aperte 2 vezes") precisa ignorar `repeat` (AUD-05).
+29. **Datas para pessoas, em horário local**: guardar em ISO/UTC, mas mostrar e nomear arquivos no fuso de
+    quem lê (AUD-02).
