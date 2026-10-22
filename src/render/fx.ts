@@ -136,7 +136,8 @@ function desenharChao(ctx: CanvasRenderingContext2D, cor: string, t: number) {
   ctx.fillRect(0, horizonte, LARGURA, ALTURA - horizonte);
 }
 
-function desenharEfeitos(ctx: CanvasRenderingContext2D) {
+// os números flutuantes vão para a camada de texto (txt), nítida em telas grandes
+function desenharEfeitos(ctx: CanvasRenderingContext2D, txt: CanvasRenderingContext2D = ctx) {
   for (const l of lasers) {
     ctx.save();
     ctx.globalAlpha = l.vida / l.max;
@@ -160,17 +161,17 @@ function desenharEfeitos(ctx: CanvasRenderingContext2D) {
     ctx.fillRect(p.x, p.y, p.tam, p.tam);
   }
   ctx.globalAlpha = 1;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
+  txt.textAlign = 'center';
+  txt.textBaseline = 'middle';
   for (const t of textos) {
-    ctx.globalAlpha = Math.min(1, t.vida / 0.4);
-    ctx.font = `${t.tam}px ${FONTE}`;
-    ctx.fillStyle = '#000';
-    ctx.fillText(t.str, t.x + 2, t.y + 2);
-    ctx.fillStyle = t.cor;
-    ctx.fillText(t.str, t.x, t.y);
+    txt.globalAlpha = Math.min(1, t.vida / 0.4);
+    txt.font = `${t.tam}px ${FONTE}`;
+    txt.fillStyle = '#000';
+    txt.fillText(t.str, t.x + 2, t.y + 2);
+    txt.fillStyle = t.cor;
+    txt.fillText(t.str, t.x, t.y);
   }
-  ctx.globalAlpha = 1;
+  txt.globalAlpha = 1;
 }
 
 // Desfaz um sprite em partículas, pixel por pixel

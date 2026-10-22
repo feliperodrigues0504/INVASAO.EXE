@@ -10,7 +10,14 @@ import { sprite, type Sprite } from './sprites';
 export const ESCALA_JOGADOR = 6;
 export const spriteDe = (e: Inimigo): Sprite => sprite(e.sprite, e.escala, e.paleta);
 
-export function desenharBatalha(ctx: CanvasRenderingContext2D, battle: Battle, t: number) {
+// ctx = camada base (fundo, sprites, barras) em 960x540; txt = camada de TEXTO, na
+// resolução real da tela (palavras e números nítidos). Em 960x540 as duas são a mesma.
+export function desenharBatalha(
+  ctx: CanvasRenderingContext2D,
+  battle: Battle,
+  t: number,
+  txt: CanvasRenderingContext2D = ctx,
+) {
   const b = battle.estado;
   if (!b) return;
   // jogador
@@ -45,9 +52,9 @@ export function desenharBatalha(ctx: CanvasRenderingContext2D, battle: Battle, t
 
   const ordenados = b.inimigos.slice().sort((x, y) => x.y - y.y);
   for (const e of ordenados) desenharInimigo(ctx, e, t);
-  for (const e of ordenados) if (!e.chefe && !e.morrendo) desenharRotulo(ctx, e, b.alvo === e);
-  if (b.chefe && (b.etapa === 'chefe' || b.etapa === 'vitoria')) desenharBarraChefe(ctx, b.chefe, t);
-  for (const e of ordenados) if (e.fala && e.falaT > 0 && !e.morrendo) desenharFala(ctx, e);
+  for (const e of ordenados) if (!e.chefe && !e.morrendo) desenharRotulo(ctx, txt, e, b.alvo === e);
+  if (b.chefe && (b.etapa === 'chefe' || b.etapa === 'vitoria')) desenharBarraChefe(ctx, txt, b.chefe, t);
+  for (const e of ordenados) if (e.fala && e.falaT > 0 && !e.morrendo) desenharFala(ctx, txt, e);
 
   // filtro azul enquanto o café está ativo
   if (b.lento > 0) {
@@ -132,11 +139,11 @@ function barra(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h
 export const ROTULO = { fonte: 26, folgaEsq: 34, folgaDir: 10, padding: 8 };
 
 // Caixa com a palavra sobre o inimigo (parte digitada em verde)
-function desenharRotulo(ctx: CanvasRenderingContext2D, e: Inimigo, alvo: boolean) {
-  ctx.font = `${ROTULO.fonte}px ${FONTE}`;
-  ctx.textBaseline = 'middle';
-  ctx.textAlign = 'left';
-  const larguras = [...e.texto].map(ch => ctx.measureText(ch).width);
+function desenharRotulo(ctx: CanvasRenderingContext2D, txt: CanvasRenderingContext2D, e: Inimigo, alvo: boolean) {
+  txt.font = `${ROTULO.fonte}px ${FONTE}`;
+  txt.textBaseline = 'middle';
+  txt.textAlign = 'left';
+  const larguras = [...e.texto].map(ch => txt.measureText(ch).width);
   const total = larguras.reduce((a, c) => a + c, 0);
   let x = e.x - total / 2;
   x = Math.max(ROTULO.folgaEsq, Math.min(LARGURA - total - ROTULO.folgaDir, x));
@@ -147,57 +154,60 @@ function desenharRotulo(ctx: CanvasRenderingContext2D, e: Inimigo, alvo: boolean
   ctx.lineWidth = alvo ? 2 : 1;
   ctx.strokeRect(x - 8 + 0.5, y - 15 + 0.5, total + 16, 30);
   if (alvo) {
-    ctx.fillStyle = '#39ff14';
-    ctx.fillText('▶', x - 26, y);
+    txt.fillStyle = '#39ff14';
+    txt.fillText('▶', x - 26, y);
   }
   let cx = x;
   for (let i = 0; i < e.texto.length; i++) {
-    if (i < e.dig) ctx.fillStyle = '#39ff14';
-    else if (i === e.dig) ctx.fillStyle = alvo ? '#ffffff' : '#e6ffe6';
-    else ctx.fillStyle = alvo ? '#d0ffd0' : '#9fbf9f';
-    ctx.fillText(e.texto[i], cx, y + 1);
-    if (i === e.dig && alvo) ctx.fillRect(cx, y + 12, larguras[i], 2);
+    if (i < e.dig) txt.fillStyle = '#39ff14';
+    else if (i === e.dig) txt.fillStyle = alvo ? '#ffffff' : '#e6ffe6';
+    else txt.fillStyle = alvo ? '#d0ffd0' : '#9fbf9f';
+    txt.fillText(e.texto[i], cx, y + 1);
+    if (i === e.dig && alvo) txt.fillRect(cx, y + 12, larguras[i], 2);
     cx += larguras[i];
   }
 }
 
-function desenharBarraChefe(ctx: CanvasRenderingContext2D, e: Inimigo, t: number) {
+function desenharBarraChefe(ctx: CanvasRenderingContext2D, txt: CanvasRenderingContext2D, e: Inimigo, t: number) {
   const x = 280,
     y = 66,
     w = 380,
     h = 16;
-  ctx.font = `18px "SilkscreenL", "Silkscreen", ${FONTE}`;
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'bottom';
-  ctx.fillStyle = '#ff3355';
-  ctx.fillText(e.titulo ?? e.nome, x, y - 4, w); // maxWidth: nomes longos são comprimidos, nunca vazam
-  ctx.textAlign = 'right';
-  ctx.textBaseline = 'top';
-  ctx.font = `20px ${FONTE}`;
-  ctx.fillStyle = '#ff99aa';
-  ctx.fillText(`${Math.max(0, Math.ceil(e.hp))}/${e.maxHp}`, x + w, y + h + 2);
+  txt.font = `18px "SilkscreenL", "Silkscreen", ${FONTE}`;
+  txt.textAlign = 'left';
+  txt.textBaseline = 'bottom';
+  txt.fillStyle = '#ff3355';
+  txt.fillText(e.titulo ?? e.nome, x, y - 4, w); // maxWidth: nomes longos são comprimidos, nunca vazam
+  txt.textAlign = 'right';
+  txt.textBaseline = 'top';
+  txt.font = `20px ${FONTE}`;
+  txt.fillStyle = '#ff99aa';
+  txt.fillText(`${Math.max(0, Math.ceil(e.hp))}/${e.maxHp}`, x + w, y + h + 2);
   barra(ctx, x, y, w, h, e.hp / e.maxHp, e.metade && Math.floor(t * 4) % 2 ? '#ff6680' : '#ff3355');
   // segmentos
   ctx.fillStyle = 'rgba(0,0,0,0.5)';
   for (let i = 1; i < 10; i++) ctx.fillRect(x + (w / 10) * i, y, 1, h);
 }
 
-function desenharFala(ctx: CanvasRenderingContext2D, e: Inimigo) {
+function desenharFala(ctx: CanvasRenderingContext2D, txt: CanvasRenderingContext2D, e: Inimigo) {
   const fala = e.fala ?? '';
-  ctx.font = `20px ${FONTE}`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  const w = Math.min(380, ctx.measureText(fala).width + 24);
+  txt.font = `20px ${FONTE}`;
+  txt.textAlign = 'center';
+  txt.textBaseline = 'middle';
+  const w = Math.min(380, txt.measureText(fala).width + 24);
   let x = e.x - w / 2;
   x = Math.max(10, Math.min(LARGURA - w - 10, x));
   const y = e.y - spriteDe(e).h - (e.chefe ? 46 : 70);
-  ctx.globalAlpha = Math.min(1, e.falaT * 2);
+  const alfa = Math.min(1, e.falaT * 2);
+  ctx.globalAlpha = alfa;
   ctx.fillStyle = 'rgba(30,0,5,0.92)';
   ctx.fillRect(x, y - 16, w, 32);
   ctx.strokeStyle = '#ff3355';
   ctx.lineWidth = 2;
   ctx.strokeRect(x + 0.5, y - 15.5, w, 32);
-  ctx.fillStyle = '#ffccd5';
-  ctx.fillText(fala, x + w / 2, y + 1, w - 16);
   ctx.globalAlpha = 1;
+  txt.globalAlpha = alfa;
+  txt.fillStyle = '#ffccd5';
+  txt.fillText(fala, x + w / 2, y + 1, w - 16);
+  txt.globalAlpha = 1;
 }

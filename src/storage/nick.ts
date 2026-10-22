@@ -18,7 +18,7 @@ function palavras(nick: string): string[] {
   return nick
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[0-9]/g, d => LEET[d] || d)
     .split(/[^a-z]+/)
     .filter(Boolean);

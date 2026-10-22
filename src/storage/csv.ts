@@ -38,5 +38,5 @@ export function gerarCsv(lista: Resultado[]): string {
       r.data,
     ]),
   );
-  return '﻿' + linhas.map(l => l.map(campo).join(';')).join('\r\n');
+  return '\uFEFF' + linhas.map(l => l.map(campo).join(';')).join('\r\n');
 }

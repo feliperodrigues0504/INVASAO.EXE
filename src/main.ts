@@ -8,7 +8,6 @@ import { CONFIG } from './config';
 import { ANDARES, BAL, CONQUISTAS, ITENS, MODOS, UPGRADES } from './content';
 import { ALTURA, Battle, LARGURA } from './game/battle';
 import { criarRng } from './game/rng';
-import { semearVisual } from './render/aleatorio';
 import { desenharBatalha } from './render/battleRenderer';
 import { ligarEfeitos } from './render/efeitosBatalha';
 import { FONTE, FX } from './render/fx';
@@ -19,13 +18,16 @@ import { espelharEmArquivo, noApp, restaurarBackups } from './storage/backup';
 import { validarNick } from './storage/nick';
 import { CHAVE_RANKING, criarRanking } from './storage/ranking';
 import { criarUI } from './ui/ui';
+import type { InvasaoGlobal } from './debug';
 
 const params = new URLSearchParams(location.search);
 const semente = /^\d+$/.test(params.get('semente') ?? '') ? Number(params.get('semente')) : null;
-if (semente != null) semearVisual(semente);
 
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
+ctx.imageSmoothingEnabled = false;
+const canvasTexto = document.getElementById('canvas-texto') as HTMLCanvasElement;
+const ctxTexto = canvasTexto.getContext('2d')!;
 const jogo = document.getElementById('game')!;
 const entrada = document.getElementById('type-input') as HTMLInputElement;
 
@@ -49,16 +51,21 @@ ligarEfeitos(battle);
 const UI = criarUI({ battle, ranking, ajustes, config: CONFIG });
 
 // ---------------- escala para caber em qualquer tela ----------------
-// O jogo é desenhado em 960x540 "lógicos". O canvas usa a resolução REAL
-// da tela (escala x devicePixelRatio), então textos ficam nítidos em Full HD/4K,
-// e a pixel art continua com pixels duros (imageSmoothingEnabled = false).
+// O jogo é desenhado em 960x540 "lógicos" e ampliado por CSS (pixel art com
+// pixels duros). Os TEXTOS do canvas (palavras, números de dano, falas) vão
+// para uma segunda camada na resolução REAL da tela, para ficarem nítidos em
+// Full HD/4K. Só o texto paga o custo da resolução alta: em PCs sem GPU,
+// desenhar o quadro inteiro em 1920x1080 custava 3x mais.
 let escala = 1;
+let txt = ctx; // em 960x540 (escala 1) as duas camadas são a mesma
 function redimensionar() {
   const s = Math.min(window.innerWidth / LARGURA, window.innerHeight / ALTURA);
   jogo.style.transform = `translate(-50%, -50%) scale(${s})`;
   escala = Math.min(3, Math.max(1, s * (window.devicePixelRatio || 1)));
-  canvas.width = Math.round(LARGURA * escala);
-  canvas.height = Math.round(ALTURA * escala);
+  canvasTexto.width = Math.round(LARGURA * escala);
+  canvasTexto.height = Math.round(ALTURA * escala);
+  canvasTexto.hidden = escala === 1;
+  txt = escala === 1 ? ctx : ctxTexto;
 }
 window.addEventListener('resize', redimensionar);
 redimensionar();
@@ -114,17 +121,24 @@ function atualizar(dt: number) {
 }
 
 function desenhar(t: number) {
-  ctx.setTransform(escala, 0, 0, escala, 0, 0);
-  ctx.imageSmoothingEnabled = false;
   const b = battle.estado;
   const naBatalha = UI.mostraBatalha() && !!b;
   FX.desenharFundo(ctx, naBatalha ? b!.A.cores[0] : '#39ff14', t, naBatalha);
+  if (txt !== ctx) {
+    txt.setTransform(1, 0, 0, 1, 0, 0);
+    txt.clearRect(0, 0, canvasTexto.width, canvasTexto.height);
+    txt.setTransform(escala, 0, 0, escala, 0, 0);
+  }
   if (naBatalha) {
+    // o tremor de tela vale para as duas camadas
     const o = FX.offset();
     ctx.save();
     ctx.translate(o.x, o.y);
-    desenharBatalha(ctx, battle, t);
-    FX.desenharEfeitos(ctx);
+    txt.save();
+    if (txt !== ctx) txt.translate(o.x, o.y);
+    desenharBatalha(ctx, battle, t, txt);
+    FX.desenharEfeitos(ctx, txt);
+    txt.restore();
     ctx.restore();
   }
   UI.atualizarHud();
@@ -136,8 +150,12 @@ function quadro(dt: number, t: number) {
   desenhar(t);
 }
 
+// ?render=N (testes do robô): desenha só 1 a cada N quadros. A simulação continua
+// completa; partidas inteiras de 10 min rodam bem mais rápido no navegador de testes.
+const DESENHAR_A_CADA = Math.max(1, Math.floor(Number(params.get('render'))) || 1);
 let ultimo = performance.now();
 let acumulado = 0;
+let quadros = 0;
 function loop(agora: number) {
   acumulado += Math.min(0.25, Math.max(0, (agora - ultimo) / 1000));
   ultimo = agora;
@@ -149,7 +167,7 @@ function loop(agora: number) {
       passos++;
     }
     if (passos === MAX_PASSOS) acumulado = 0;
-    desenhar(agora / 1000);
+    if (++quadros % DESENHAR_A_CADA === 0) desenhar(agora / 1000);
   } catch (err) {
     // nunca deixar o jogo congelar no meio do evento
     console.error(err);
@@ -161,11 +179,6 @@ function loop(agora: number) {
 //   INVASAO.limparRanking()   -> apaga o ranking
 //   INVASAO.exportarRanking() -> mostra o ranking em formato de tabela
 // O restante (battle, ui...) é usado pelos testes automatizados (tests/e2e).
-declare global {
-  interface Window {
-    INVASAO: Record<string, unknown>;
-  }
-}
 window.INVASAO = {
   limparRanking: () => {
     ranking.limpar();
@@ -187,7 +200,8 @@ window.INVASAO = {
   ctx,
   FONTE,
   noApp: noApp(),
-};
+  escala: () => escala,
+} satisfies InvasaoGlobal;
 
 // ?bot=1 (ou ?bot=ms) -> um robô joga sozinho, para testar o jogo.
 // ?parar=loja faz o robô parar quando chegar naquela tela.
