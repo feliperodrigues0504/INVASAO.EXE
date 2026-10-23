@@ -36,6 +36,7 @@ A regra principal: **a lógica do jogo não sabe que existe tela, som ou navegad
 | `src/render/` | Desenho no canvas e efeitos visuais | sim |
 | `src/audio/` | Sons e música 8-bit sintetizados | sim |
 | `src/ui/` | Telas, HUD, teclado dos menus, painel do organizador | sim |
+| `src/paleta.ts` | As cores do jogo num lugar só (canvas e CSS usam as mesmas) | não |
 | `src/main.ts` | Liga tudo: loop, escala da tela, captura de teclado, modos de teste | sim |
 
 ## Lógica pura + eventos
@@ -117,6 +118,23 @@ Todas ficam na lógica pura (`battle.ts`) e todos os números ficam em `jogo.jso
 ([tests/balanceamento](../tests/balanceamento/simular.test.ts)). Foi assim que os números da versão 4
 foram ajustados para não deixar o jogo mais fácil que a versão 3.
 
+## Design (versão 4)
+
+- **Paleta:** [paleta.ts](../src/paleta.ts) tem todas as cores; as variáveis do CSS (`--verde`,
+  `--vermelho`...) repetem os mesmos valores, e um teste de unidade confere que continuam iguais.
+- **Cenários:** [render/cenarios.ts](../src/render/cenarios.ts) tem uma função por andar, que desenha
+  com "pixels" de 4 px, translúcida, atrás da grade do chão. A chuva Matrix fica mais fraca na batalha.
+- **Elevador:** [render/elevador.ts](../src/render/elevador.ts) é desenhado por cima da batalha enquanto
+  o banner do andar está na tela; a UI informa há quanto tempo o banner abriu (`UI.elevador()`).
+- **Animações:** [render/animacao.ts](../src/render/animacao.ts) guarda só estado visual (digitando,
+  ferido), ligado pelos eventos da batalha em `efeitosBatalha.ts`. A lógica não sabe dele.
+- **Ícones:** os símbolos são sprites 8×8 ([content/icones.ts](../src/content/icones.ts)). No HTML,
+  [ui/icones.ts](../src/ui/icones.ts) troca o símbolo por um `<img>` gerado do sprite; no canvas, o
+  rótulo desenha o sprite direto.
+- **Modo vitrine:** com o título parado, a UI começa uma partida marcada como `debug` (fora do ranking),
+  com o som mudo, e `UI.passoVitrine()` digita como um jogador de ~90 ppm a cada quadro. Qualquer tecla
+  ou clique chama `irTitulo()`.
+
 ## Render em duas camadas
 
 O jogo é desenhado em 960×540 lógicos e ampliado para a tela:
@@ -155,6 +173,6 @@ Ele abre com dois cliques (via `file://`), sem servidor e sem internet. É o mes
 |---|---|---|---|
 | Unidade | Vitest | `tests/unit/` | Regras da batalha, conteúdo, ranking, nick, CSV, estados, render com canvas falso, arquivos (ASCII/CRLF do `.bat`, caracteres invisíveis) |
 | Ponta a ponta | Playwright | `tests/e2e/` | O **build real** via `file://`, com a rede bloqueada e falhando em qualquer erro de console. Relógio falso (`page.clock`): os 25 s de cada tela passam na hora |
-| Visual | Playwright `toHaveScreenshot` | `tests/e2e/visual.spec.ts` | 15 telas comparadas com as referências em `tests/e2e/__screenshots__` |
+| Visual | Playwright `toHaveScreenshot` | `tests/e2e/visual.spec.ts` | 18 telas comparadas com as referências em `tests/e2e/__screenshots__` |
 | Robô | Playwright | `tests/e2e/robo.spec.ts` | Partidas completas em 4 velocidades + 20 min de uso contínuo |
 | Mutação | Stryker | `stryker.config.json` | Os testes de unidade pegam bugs injetados na lógica |

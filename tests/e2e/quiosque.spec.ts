@@ -243,3 +243,24 @@ test('fuzz: 3000 teclas aleatórias em todas as telas sem erro, estado inválido
   await jogo.eval(j => j.ui.irTitulo());
   expect(await jogo.estado()).toBe('titulo');
 });
+
+test('título parado vira demonstração; qualquer tecla volta ao título sem sujar o ranking', async ({ jogo, page }) => {
+  await jogo.abrir();
+  const rankingAntes = await page.evaluate(() => JSON.stringify(localStorage));
+  await jogo.pular(31_500);
+  expect(await jogo.eval(j => j.ui.emVitrine), 'demonstração começou').toBe(true);
+  await expect(page.locator('#vitrine')).toBeVisible();
+  await jogo.pular(3800);
+  expect(await jogo.estado()).toBe('batalha');
+  // o robô joga sozinho: acerta letras e derruba inimigos
+  await jogo.avancar(12_000);
+  expect(await jogo.eval(j => j.battle.run!.stats.acertos), 'o robô digitou').toBeGreaterThan(20);
+  await jogo.tecla('a');
+  expect(await jogo.estado(), 'a tecla volta ao título').toBe('titulo');
+  expect(await jogo.eval(j => j.ui.emVitrine)).toBe(false);
+  await expect(page.locator('#vitrine')).toBeHidden();
+  expect(await page.evaluate(() => JSON.stringify(localStorage)), 'nada foi salvo').toBe(rankingAntes);
+  // e a próxima tecla já começa uma partida normal
+  await jogo.teclaDepois('Enter');
+  expect(await jogo.estado()).toBe('nick');
+});

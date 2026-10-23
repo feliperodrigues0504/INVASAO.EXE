@@ -32,7 +32,8 @@ test('duelo em revezamento: J1 → J2 com o mesmo desafio → placar → título
   await jogo.teclaDepois('Enter');
   await jogo.pular(3800);
   await jogo.avancar(6000);
-  await expect(page.locator('#hud-extra')).toContainText('👻 Ana'); // o J2 corre contra o J1
+  await expect(page.locator('#hud-extra')).toContainText('Ana'); // o J2 corre contra o J1
+  await expect(page.locator('#hud-extra [data-icone=fantasma]')).toBeVisible();
   await jogo.eval(j => (j.battle.run!.pontos = 7000));
   await jogo.tecla('Escape');
   await jogo.teclaDepois('3');
@@ -98,7 +99,10 @@ test('HUD: PPM ao vivo e o fantasma do recordista (verde à frente, vermelho atr
   await jogo.entrarNaBatalha('Visitante', '1');
   await jogo.avancar(8000);
   await expect(page.locator('#hud-extra')).toContainText('PPM');
-  await expect(page.locator('#hud-extra .fantasma')).toContainText('👻 Recordista: -50000');
+  await expect(page.locator('#hud-extra .fantasma')).toContainText('Recordista: -50000');
+  // ícone em pixel art no lugar do emoji (a TV do quiosque não tem fonte de emoji)
+  await expect(page.locator('#hud-extra .fantasma [data-icone=fantasma]')).toBeVisible();
+  expect(await page.locator('#hud').innerText()).not.toMatch(/[👻⚡★🏆]/u);
   await expect(page.locator('#hud-extra .fantasma')).toHaveClass(/red/);
 });
 
@@ -144,4 +148,22 @@ test('impressora: o prompt mostra a frase chegando (░) e a letra que não cheg
   await page.keyboard.type(frase.slice(0, 5));
   expect(await jogo.eval(j => j.battle.estado!.chefe!.dig)).toBe(3);
   expect(await jogo.eval(j => j.battle.run!.stats.erros)).toBe(erros);
+});
+
+test('HUD do design: medidor até o overdrive e vinheta vermelha com vida baixa', async ({ jogo, page }) => {
+  await jogo.abrir();
+  await jogo.debug(1);
+  await jogo.eval(j => (j.battle.estado!.combo = 10));
+  await jogo.avancar(200);
+  const largura = () => page.locator('#combo-medidor i').evaluate(el => (el as HTMLElement).style.width);
+  expect(await largura(), 'combo 10 de 20 = metade').toBe('50%');
+  await jogo.eval(j => (j.battle.estado!.overdrive = true));
+  await jogo.avancar(200);
+  await expect(page.locator('#combo-medidor')).toHaveClass(/pronto/);
+  expect(await largura()).toBe('100%');
+
+  await expect(page.locator('#perigo')).not.toHaveClass(/ativo/);
+  await jogo.eval(j => (j.battle.run!.p.hp = Math.ceil(j.battle.run!.p.maxHp * 0.2)));
+  await jogo.avancar(200);
+  await expect(page.locator('#perigo'), 'vida abaixo de 30% acende a vinheta').toHaveClass(/ativo/);
 });

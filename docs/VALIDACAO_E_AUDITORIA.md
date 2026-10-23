@@ -207,6 +207,24 @@ distinguir de qual teclado veio cada tecla.
 | BAL-03 | Média | Balanceamento | A primeira versão das mecânicas deixou o modo normal **mais fácil** para quem digita rápido (Patch, 80 ppm: 4 → 8 vitórias). A **ablação** (desligar uma mecânica de cada vez) mostrou que a causa era o contra-ataque, disparado sem querer por jogadores rápidos | Janela do contra-ataque de 90% para 97% da barra; sinergias com 4 cartas e bônus menores; Modo Root +40%; overdrive 2x. Somando os cenários, ficou um pouco mais difícil que a v3 | ✅ Corrigido |
 | TST-12 | — | Testes | O "jogador perfeito" dos testes digitava as palavras-armadilha e perdia o combo, e a conquista x20 parecia impossível | O robô desvia das armadilhas, como um bom jogador | ✅ Corrigido |
 
+### Versão 4 — design (23/10/2026)
+
+Pedido: cenários, animações e legibilidade, mantendo a pixel art no nível dos sprites atuais.
+
+| ID | Funcionalidade | Coberto por |
+|---|---|---|
+| FEAT-15 | **Cenário por andar** (9) e **transição de elevador** entre os andares | 9 testes de render + 2 do elevador + capturas `05-banner`, `06-batalha`, `15` |
+| FEAT-16 | **Animações**: digitar, piscar ao levar dano, inimigos respirando, **entrada do chefão** | 9 testes de render da entrada + revisão visual |
+| FEAT-17 | **Ícones em pixel art** no lugar dos emojis (HUD, banner, conquistas, ranking, duelo) | teste de unidade dos ícones + E2E (HUD sem emoji) + capturas |
+| FEAT-18 | **Paleta centralizada** (`src/paleta.ts`), conferida contra o CSS | teste de unidade |
+| FEAT-19 | Legibilidade para TV: log e status maiores e com fundo, **medidor até o overdrive**, **vinheta de vida baixa**, borda tracejada na armadilha (daltonismo), transição entre telas | E2E do medidor e da vinheta + capturas |
+| FEAT-20 | **Modo vitrine**: título parado por 30 s vira demonstração muda, fora do ranking | E2E (começa, o robô joga, tecla volta, nada é salvo) |
+
+| ID | Sev. | Área | Achado durante o desenvolvimento | Correção | Status |
+|---|---|---|---|---|---|
+| VIS-02 | Baixa | Layout | Com a fonte da barra de itens em 21 px, o nome do item quebrava a linha e cobria o prompt | Mantida em 19 px | ✅ Corrigido |
+| TST-13 | — | Testes | `--update-snapshots` não regravou capturas com menos de 2% de diferença (ícones pequenos, cenários translúcidos), e as referências ficaram desatualizadas | Referências regravadas com `--update-snapshots=all` e revisadas uma a uma | ✅ Corrigido |
+
 ---
 
 ## 4. Rodadas de validação
