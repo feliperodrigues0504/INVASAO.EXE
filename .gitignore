@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+reports/
+playwright-report/
+test-results*/
+_*.log
+blob-report/
+.stryker-tmp/
+src-tauri/target/
+src-tauri/gen/
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Permissões da janela do jogo. Os comandos do próprio app (backup e exportar CSV) ficam em src/main.rs e só aceitam nomes conhecidos.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

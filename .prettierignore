@@ -1,0 +1,11 @@
+dist
+coverage
+reports
+playwright-report
+test-results*
+_*.log
+src-tauri/target
+src-tauri/gen
+package-lock.json
+tests/e2e/**/*-snapshots
+*.md

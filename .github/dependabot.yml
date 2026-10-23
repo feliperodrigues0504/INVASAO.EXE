@@ -1,0 +1,26 @@
+# Atualizações automáticas de dependências (abre PRs mensais; a CI testa cada uma)
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    groups:
+      ferramentas:
+        patterns: ['*']
+    # O Stryker 10 não ativa os mutantes com o Vitest 5: o teste de mutação "passaria"
+    # sem testar nada (AUD-06). Só subir o Vitest de versão maior junto com um Stryker
+    # compatível, conferindo que o placar de mutação continua o mesmo.
+    ignore:
+      - dependency-name: vitest
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@vitest/*'
+        update-types: ['version-update:semver-major']
+  - package-ecosystem: cargo
+    directory: /src-tauri
+    schedule:
+      interval: monthly
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

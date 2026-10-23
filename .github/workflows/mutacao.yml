@@ -1,0 +1,30 @@
+# Teste de mutação (Stryker): toda segunda-feira e sob demanda (aba Actions).
+# É lento demais para rodar a cada push; o relatório fica nos artefatos.
+name: Teste de mutação
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stryker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run test:mutation
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: relatorio-mutacao
+          path: reports/mutation/
+          retention-days: 30
