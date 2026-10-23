@@ -29,7 +29,11 @@
     "reviver": 0,
     "danoChefe": 1,
     "escudoInicial": 0,
-    "creditos": 0
+    "creditos": 0,
+    "danoPorErro": 0,
+    "comboFragil": false,
+    "cafeInicial": 0,
+    "curaAndar": 1
   },
   "modos": {
     "normal": {
@@ -50,27 +54,33 @@
   "tiposInimigo": {
     "bug": {
       "arquivo": "bug.exe",
-      "sprite": "bug"
+      "sprite": "bug",
+      "mecanica": "nenhuma"
     },
     "virus": {
       "arquivo": "virus.dll",
-      "sprite": "virus"
+      "sprite": "virus",
+      "mecanica": "infectar"
     },
     "glitch": {
       "arquivo": "glitch.sys",
-      "sprite": "glitch"
+      "sprite": "glitch",
+      "mecanica": "embaralhar"
     },
     "email": {
       "arquivo": "phish.msg",
-      "sprite": "email"
+      "sprite": "email",
+      "mecanica": "armadilha"
     },
     "worm": {
       "arquivo": "worm.bat",
-      "sprite": "worm"
+      "sprite": "worm",
+      "mecanica": "replicar"
     },
     "pacote": {
       "arquivo": "pacote.tmp",
-      "sprite": "pacote"
+      "sprite": "pacote",
+      "mecanica": "atravessar"
     }
   },
   "conquistas": [
@@ -178,7 +188,8 @@
           "op": "mul",
           "valor": 1.25
         }
-      ]
+      ],
+      "area": "performance"
     },
     {
       "id": "firewall",
@@ -198,7 +209,8 @@
           "op": "add",
           "valor": 25
         }
-      ]
+      ],
+      "area": "seguranca"
     },
     {
       "id": "ssd",
@@ -213,7 +225,8 @@
           "op": "mul",
           "valor": 0.88
         }
-      ]
+      ],
+      "area": "infra"
     },
     {
       "id": "mineracao",
@@ -228,7 +241,8 @@
           "op": "add",
           "valor": 0.5
         }
-      ]
+      ],
+      "area": "infra"
     },
     {
       "id": "cache",
@@ -243,7 +257,8 @@
           "op": "add",
           "valor": 1
         }
-      ]
+      ],
+      "area": "seguranca"
     },
     {
       "id": "exploit",
@@ -258,7 +273,8 @@
           "op": "add",
           "valor": 0.1
         }
-      ]
+      ],
+      "area": "performance"
     },
     {
       "id": "criptografia",
@@ -273,7 +289,8 @@
           "op": "add",
           "valor": 0.15
         }
-      ]
+      ],
+      "area": "seguranca"
     },
     {
       "id": "garbage",
@@ -288,7 +305,8 @@
           "op": "add",
           "valor": 4
         }
-      ]
+      ],
+      "area": "infra"
     },
     {
       "id": "multithread",
@@ -303,7 +321,8 @@
           "op": "set",
           "valor": 2
         }
-      ]
+      ],
+      "area": "performance"
     },
     {
       "id": "corretor",
@@ -318,7 +337,8 @@
           "op": "set",
           "valor": true
         }
-      ]
+      ],
+      "area": "infra"
     },
     {
       "id": "vpn",
@@ -333,7 +353,8 @@
           "op": "set",
           "valor": 0.7
         }
-      ]
+      ],
+      "area": "seguranca"
     },
     {
       "id": "autocomplete",
@@ -348,7 +369,8 @@
           "op": "set",
           "valor": true
         }
-      ]
+      ],
+      "area": "performance"
     },
     {
       "id": "backup",
@@ -363,7 +385,8 @@
           "op": "add",
           "valor": 1
         }
-      ]
+      ],
+      "area": "seguranca"
     },
     {
       "id": "zeroday",
@@ -377,6 +400,70 @@
           "atributo": "critMult",
           "op": "set",
           "valor": 3
+        }
+      ],
+      "area": "performance"
+    },
+    {
+      "id": "modoroot",
+      "nome": "Modo Root",
+      "icone": "#!/",
+      "raridade": "raro",
+      "max": 1,
+      "area": "performance",
+      "desc": "+40% de dano, mas cada letra errada custa 2 de integridade.",
+      "efeitos": [
+        {
+          "atributo": "atk",
+          "op": "mul",
+          "valor": 1.4
+        },
+        {
+          "atributo": "danoPorErro",
+          "op": "add",
+          "valor": 2
+        }
+      ]
+    },
+    {
+      "id": "deploysexta",
+      "nome": "Deploy na Sexta",
+      "icone": "FRI",
+      "raridade": "raro",
+      "max": 1,
+      "area": "infra",
+      "desc": "O combo cresce +1 a mais por palavra, mas ZERA ao levar dano.",
+      "efeitos": [
+        {
+          "atributo": "ganhoCombo",
+          "op": "add",
+          "valor": 1
+        },
+        {
+          "atributo": "comboFragil",
+          "op": "set",
+          "valor": true
+        }
+      ]
+    },
+    {
+      "id": "cafeduplo",
+      "nome": "Café Duplo",
+      "icone": "c[_]2",
+      "raridade": "comum",
+      "max": 1,
+      "area": "infra",
+      "desc": "+8 s de café no início de cada andar, mas cura metade entre andares.",
+      "efeitos": [
+        {
+          "atributo": "cafeInicial",
+          "op": "add",
+          "valor": 8
+        },
+        {
+          "atributo": "curaAndar",
+          "op": "mul",
+          "valor": 0.5
         }
       ]
     }
@@ -410,5 +497,130 @@
       "preco": 40,
       "desc": "Bloqueia os próximos 2 ataques."
     }
-  ]
+  ],
+  "sinergias": [
+    {
+      "area": "seguranca",
+      "nome": "Defesa em Profundidade",
+      "icone": "[#][#]",
+      "minimo": 4,
+      "desc": "4 cartas de Segurança: +1 escudo no início de cada andar.",
+      "efeitos": [
+        {
+          "atributo": "escudoInicial",
+          "op": "add",
+          "valor": 1
+        }
+      ]
+    },
+    {
+      "area": "performance",
+      "nome": "Alta Performance",
+      "icone": ">>>>",
+      "minimo": 4,
+      "desc": "4 cartas de Performance: críticos causam +50% de dano.",
+      "efeitos": [
+        {
+          "atributo": "critMult",
+          "op": "add",
+          "valor": 0.5
+        }
+      ]
+    },
+    {
+      "area": "infra",
+      "nome": "Cultura DevOps",
+      "icone": "{CI}",
+      "minimo": 4,
+      "desc": "4 cartas de Infraestrutura: +2 de integridade por abate.",
+      "efeitos": [
+        {
+          "atributo": "vidaPorAbate",
+          "op": "add",
+          "valor": 2
+        }
+      ]
+    }
+  ],
+  "areas": {
+    "seguranca": {
+      "nome": "SEGURANÇA",
+      "cor": "#00e5ff"
+    },
+    "performance": {
+      "nome": "PERFORMANCE",
+      "cor": "#ff2bd6"
+    },
+    "infra": {
+      "nome": "INFRA",
+      "cor": "#ffb000"
+    }
+  },
+  "mecanicas": {
+    "parry": {
+      "limite": 0.97,
+      "bonusDano": 1
+    },
+    "especiais": {
+      "dourada": 0.04,
+      "explosiva": 0.03,
+      "corrompida": 0.06,
+      "multCreditosDourada": 3,
+      "fracaoExplosao": 0.5,
+      "curaCorrompida": 0.25
+    },
+    "overdrive": {
+      "combo": 20,
+      "multDano": 2
+    },
+    "armadilha": {
+      "chance": 0.35,
+      "duracao": 4
+    },
+    "replicar": {
+      "tempo": 8,
+      "fracaoVida": 0.5
+    },
+    "embaralhar": {
+      "tempo": 5
+    },
+    "atravessar": {
+      "fatorTempo": 1.3,
+      "multDano": 1.5
+    },
+    "impressao": {
+      "letrasPorSeg": 7,
+      "atraso": 0.6
+    },
+    "lag": {
+      "pacoteMin": 1,
+      "pacoteMax": 4,
+      "pausaMin": 0.25,
+      "pausaMax": 0.9
+    },
+    "rollback": {
+      "ocioso": 2.5,
+      "letras": 3,
+      "repetir": 1
+    },
+    "prazo": {
+      "segundos": 60,
+      "multIntervalo": 0.7,
+      "multDano": 1.25
+    },
+    "rerrolar": {
+      "custo": 25,
+      "aumento": 10
+    },
+    "elite": {
+      "multVida": 1.4,
+      "multDano": 1.25,
+      "multRecompensa": 2,
+      "multPontos": 1.5
+    },
+    "servidor": {
+      "chance": 0.35,
+      "aposta": 50
+    }
+  }
 }

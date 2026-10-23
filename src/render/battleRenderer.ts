@@ -96,10 +96,21 @@ function desenharInimigo(ctx: CanvasRenderingContext2D, e: Inimigo, t: number) {
   y = Math.round(y);
 
   sombra(ctx, e.x, e.y, spr.w * 0.4);
+  // inimigo de elite (rota de elite): aura dourada pulsando
+  if (e.elite) {
+    ctx.save();
+    ctx.globalAlpha = 0.35 + Math.sin(t * 4) * 0.15;
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.ellipse(e.x, e.y, spr.w * 0.48, spr.w * 0.13, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
   ctx.save();
   if (e.nascendo > 0) ctx.globalAlpha = rv() < 0.5 ? 0.3 : 0.8;
   const img = e.flash > 0 ? spr.flash : spr.canvas;
-  const glitch = e.chefe && e.truque === 'glitch' && rv() < 0.12;
+  const glitch = e.chefe && e.truques.includes('glitch') && rv() < 0.12;
   if (glitch) {
     // fatias deslocadas + separação de cor
     const fatias = 6,
@@ -148,24 +159,45 @@ function desenharRotulo(ctx: CanvasRenderingContext2D, txt: CanvasRenderingConte
   let x = e.x - total / 2;
   x = Math.max(ROTULO.folgaEsq, Math.min(LARGURA - total - ROTULO.folgaDir, x));
   const y = e.y - spriteDe(e).h - 24;
-  ctx.fillStyle = alvo ? 'rgba(0,40,0,0.92)' : 'rgba(0,0,0,0.8)';
+  // cor da moldura: armadilha (vermelho), palavras especiais, alvo (verde) ou normal
+  const estilo = estiloRotulo(e);
+  ctx.fillStyle = e.armadilha ? 'rgba(60,0,8,0.92)' : alvo ? 'rgba(0,40,0,0.92)' : 'rgba(0,0,0,0.8)';
   ctx.fillRect(x - 8, y - 15, total + 16, 30);
-  ctx.strokeStyle = alvo ? '#39ff14' : 'rgba(57,255,20,0.35)';
-  ctx.lineWidth = alvo ? 2 : 1;
+  ctx.strokeStyle = estilo?.cor ?? (alvo ? '#39ff14' : 'rgba(57,255,20,0.35)');
+  ctx.lineWidth = alvo || estilo ? 2 : 1;
   ctx.strokeRect(x - 8 + 0.5, y - 15 + 0.5, total + 16, 30);
+  if (estilo) {
+    // selo à direita da palavra: ⚠ armadilha, $ dourada, ✹ explosiva, ☣ corrompida
+    txt.font = `18px ${FONTE}`;
+    txt.fillStyle = estilo.cor;
+    txt.fillText(estilo.selo, x + total + 12, y - 12);
+    txt.font = `${ROTULO.fonte}px ${FONTE}`;
+  }
   if (alvo) {
-    txt.fillStyle = '#39ff14';
+    txt.fillStyle = e.armadilha ? '#ff3355' : '#39ff14';
     txt.fillText('▶', x - 26, y);
   }
   let cx = x;
   for (let i = 0; i < e.texto.length; i++) {
-    if (i < e.dig) txt.fillStyle = '#39ff14';
+    if (e.armadilha) txt.fillStyle = i < e.dig ? '#ff99aa' : '#ff3355';
+    else if (i < e.dig) txt.fillStyle = '#39ff14';
     else if (i === e.dig) txt.fillStyle = alvo ? '#ffffff' : '#e6ffe6';
     else txt.fillStyle = alvo ? '#d0ffd0' : '#9fbf9f';
     txt.fillText(e.texto[i], cx, y + 1);
     if (i === e.dig && alvo) txt.fillRect(cx, y + 12, larguras[i], 2);
     cx += larguras[i];
   }
+}
+
+const ESTILOS_ESPECIAIS = {
+  dourada: { cor: '#ffd700', selo: '$' },
+  explosiva: { cor: '#ff8c1a', selo: '✹' },
+  corrompida: { cor: '#b46cff', selo: '☣' },
+} as const;
+
+export function estiloRotulo(e: Inimigo): { cor: string; selo: string } | null {
+  if (e.armadilha) return { cor: '#ff3355', selo: '⚠' };
+  return e.especial ? ESTILOS_ESPECIAIS[e.especial] : null;
 }
 
 function desenharBarraChefe(ctx: CanvasRenderingContext2D, txt: CanvasRenderingContext2D, e: Inimigo, t: number) {
@@ -183,6 +215,24 @@ function desenharBarraChefe(ctx: CanvasRenderingContext2D, txt: CanvasRenderingC
   txt.font = `20px ${FONTE}`;
   txt.fillStyle = '#ff99aa';
   txt.fillText(`${Math.max(0, Math.ceil(e.hp))}/${e.maxHp}`, x + w, y + h + 2);
+  // Prazo de Entrega: relógio regressivo (pisca nos últimos 10 s)
+  if (e.truques.includes('prazo')) {
+    const seg = Math.max(0, Math.ceil(e.prazoT));
+    const urgente = e.estourado || (seg <= 10 && Math.floor(t * 4) % 2 === 0);
+    txt.textAlign = 'left';
+    txt.fillStyle = urgente ? '#ff3355' : '#ffd23f';
+    txt.fillText(
+      e.estourado ? 'PRAZO ESTOURADO!' : `PRAZO ${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, '0')}`,
+      x,
+      y + h + 2,
+    );
+  }
+  if (e.elite) {
+    txt.textAlign = 'right';
+    txt.fillStyle = '#ffd700';
+    txt.font = `14px "SilkscreenL", "Silkscreen", ${FONTE}`;
+    txt.fillText('ELITE', x + w, y - 22);
+  }
   barra(ctx, x, y, w, h, e.hp / e.maxHp, e.metade && Math.floor(t * 4) % 2 ? '#ff6680' : '#ff3355');
   // segmentos
   ctx.fillStyle = 'rgba(0,0,0,0.5)';

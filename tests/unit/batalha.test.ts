@@ -415,40 +415,41 @@ describe('upgrades', () => {
     expect(t.battle.sortearCartas(3)).toHaveLength(0);
   });
 
-  it('efeitos de todas as cartas', () => {
+  it.each([
+    ['overclock', { atk: 12.5 }],
+    ['firewall', { maxHp: 125, hp: 125 }],
+    ['ssd', { velInimigos: 0.88 }],
+    ['mineracao', { multCreditos: 1.5 }],
+    ['cache', { escudoInicial: 1 }],
+    ['exploit', { crit: 0.18 }],
+    ['criptografia', { bloqueio: 0.15 }],
+    ['garbage', { vidaPorAbate: 4 }],
+    ['multithread', { ganhoCombo: 2 }],
+    ['corretor', { perdoaErro: true }],
+    ['vpn', { danoChefe: 0.7 }],
+    ['autocomplete', { autocomplete: true }],
+    ['backup', { reviver: 1 }],
+    ['zeroday', { critMult: 3 }],
+    ['modoroot', { atk: 14, danoPorErro: 2 }],
+    ['deploysexta', { ganhoCombo: 2, comboFragil: true }],
+    ['cafeduplo', { cafeInicial: 8, curaAndar: 0.5 }],
+  ] as const)('carta %s aplica o efeito certo', (id, esperado) => {
     const t = novaBatalha(0);
-    const p = t.run.p;
-    const pega = (id: string) => t.battle.aplicarUpgrade(UPGRADES.find(u => u.id === id)!);
-    pega('overclock');
-    expect(p.atk).toBe(12.5);
-    pega('firewall');
-    expect([p.maxHp, p.hp]).toEqual([125, 125]);
-    pega('ssd');
-    expect(p.velInimigos).toBe(0.88);
-    pega('mineracao');
-    expect(p.multCreditos).toBe(1.5);
-    pega('cache');
-    expect(p.escudoInicial).toBe(1);
-    pega('exploit');
-    expect(p.crit).toBeCloseTo(0.18);
-    pega('criptografia');
-    expect(p.bloqueio).toBe(0.15);
-    pega('garbage');
-    expect(p.vidaPorAbate).toBe(4);
-    pega('multithread');
-    expect(p.ganhoCombo).toBe(2);
-    pega('corretor');
-    expect(p.perdoaErro).toBe(true);
-    pega('vpn');
-    expect(p.danoChefe).toBe(0.7);
-    pega('autocomplete');
-    expect(p.autocomplete).toBe(true);
-    pega('backup');
-    expect(p.reviver).toBe(1);
-    pega('zeroday');
-    expect(p.critMult).toBe(3);
+    t.battle.aplicarUpgrade(UPGRADES.find(u => u.id === id)!);
+    for (const [k, v] of Object.entries(esperado)) {
+      const atual = (t.run.p as unknown as Record<string, number | boolean>)[k];
+      if (typeof v === 'number') expect(atual, k).toBeCloseTo(v);
+      else expect(atual, k).toBe(v);
+    }
+  });
+
+  it('escudo inicial (Cache) e café inicial (Café Duplo) valem no começo de cada andar', () => {
+    const t = novaBatalha(0);
+    t.battle.aplicarUpgrade(UPGRADES.find(u => u.id === 'cache')!);
+    t.battle.aplicarUpgrade(UPGRADES.find(u => u.id === 'cafeduplo')!);
     t.battle.iniciarAndar();
     expect(t.b().escudo).toBe(1);
+    expect(t.b().lento).toBe(8);
   });
 
   it('Autocomplete: 1ª letra pronta e digitá-la por hábito não é erro', () => {

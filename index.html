@@ -44,6 +44,7 @@
           <div id="hud-status"></div>
         </div>
         <div id="hud-combo"></div>
+        <div id="hud-extra"></div>
         <div id="log"></div>
         <div id="prompt">
           <span class="prompt-user">root@empresa:~$</span>
@@ -110,8 +111,13 @@
             <div class="modo-nome">RÁPIDO</div>
             <div class="modo-desc" id="modo-desc-rapido"></div>
           </div>
+          <div class="modo duelo" data-modo="duelo">
+            <div class="card-key">[3]</div>
+            <div class="modo-nome">DUELO</div>
+            <div class="modo-desc">2 jogadores, um depois do outro · mesmo desafio · quem fizer mais pontos vence</div>
+          </div>
         </div>
-        <div class="hint center">pressione 1 ou 2 (ou clique) — ESC volta</div>
+        <div class="hint center">pressione 1, 2 ou 3 (ou clique) — ESC volta</div>
       </div>
 
       <!-- Tutorial -->
@@ -122,7 +128,11 @@
             <li><b>DIGITE</b> a palavra que aparece sobre um inimigo para atacá-lo.</li>
             <li>Cada palavra completa causa <b>dano</b>. Inimigos mais fortes precisam de várias palavras.</li>
             <li>Acertar sem errar aumenta o <b>COMBO</b> e o seu dano. Errar zera o combo!</li>
-            <li>Fique de olho na <span class="red">barra vermelha</span>: quando enche, o inimigo ataca.</li>
+            <li>
+              Fique de olho na <span class="red">barra vermelha</span>: quando enche, o inimigo ataca. Termine a palavra
+              com ela quase cheia para um <b>CONTRA-ATAQUE</b>!
+            </li>
+            <li>Palavra <span class="red">vermelha com ⚠</span> é armadilha de phishing: <b>não digite</b>.</li>
             <li>
               <b>BACKSPACE</b> troca de alvo &nbsp;·&nbsp; <b>1 2 3 4</b> usam itens &nbsp;·&nbsp; <b>ESC</b> pausa.
             </li>
@@ -151,7 +161,27 @@
       <div id="screen-upgrade" class="screen hidden">
         <div class="panel-title center">// ESCOLHA UM UPGRADE</div>
         <div id="cards"></div>
-        <div class="hint center">pressione 1, 2 ou 3 (ou clique)</div>
+        <div id="sinergias"></div>
+        <div class="hint center">pressione 1, 2 ou 3 (ou clique) · <span id="rerrolar"></span></div>
+      </div>
+
+      <!-- Rota antes do próximo andar -->
+      <div id="screen-rota" class="screen hidden">
+        <div class="terminal-box wide">
+          <div class="panel-title" id="rota-titulo"></div>
+          <div id="rota-opcoes"></div>
+          <div id="rota-msg"></div>
+          <div class="hint" id="rota-dica">escolha a rota com 1 ou 2</div>
+        </div>
+      </div>
+
+      <!-- Resultado do duelo -->
+      <div id="screen-duelo" class="screen hidden">
+        <div class="terminal-box wide">
+          <div class="end-title gold" id="duelo-titulo"></div>
+          <div id="duelo-placar"></div>
+          <div class="blink press">[ ENTER PARA VOLTAR ]</div>
+        </div>
       </div>
 
       <!-- Loja -->
@@ -186,7 +216,7 @@
           <div id="end-sub"></div>
           <div id="end-stats"></div>
           <div id="end-rank"></div>
-          <div class="blink press">[ ENTER PARA VER SEU RELATÓRIO ]</div>
+          <div class="blink press" id="end-press">[ ENTER PARA VER SEU RELATÓRIO ]</div>
         </div>
       </div>
 

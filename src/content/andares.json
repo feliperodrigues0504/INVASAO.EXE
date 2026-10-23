@@ -2,7 +2,7 @@
   {
     "nome": "SUPORTE TÉCNICO",
     "desc": "Tudo começa no térreo: cabos soltos e computadores travados.",
-    "dica": "Digite a palavra sobre o inimigo para atacar!",
+    "dica": "Digite a palavra sobre o inimigo. Glitches trocam a palavra se você demorar a começar!",
     "acentos": "nenhum",
     "inimigos": 5,
     "maxTela": 1,
@@ -53,7 +53,6 @@
       "intervalo": 10,
       "dano": 8,
       "recompensa": 40,
-      "truque": null,
       "frases": [
         "papel atolado na bandeja",
         "sem tinta preta outra vez",
@@ -65,14 +64,16 @@
         "intro": "PAPEL ATOLADO... PARA SEMPRE!",
         "metade": "SEM TINTA? NUNCA!",
         "derrota": "imprimindo... página... de... teste..."
-      }
+      },
+      "truques": ["impressao"],
+      "dica": "A frase sai aos poucos da impressora: digite no ritmo dela."
     },
     "fato": "Profissionais de Sistemas de Informação entendem de tudo: do hardware até a estratégia da empresa."
   },
   {
     "nome": "SISTEMAS OPERACIONAIS",
     "desc": "Processos fora de controle tomaram conta dos computadores.",
-    "dica": "Agora podem aparecer 2 inimigos. Digite a primeira letra para escolher o alvo.",
+    "dica": "Vírus infectam o vizinho ao morrer: a palavra dele fica mais longa.",
     "acentos": "nenhum",
     "inimigos": 6,
     "maxTela": 2,
@@ -123,7 +124,6 @@
       "intervalo": 10,
       "dano": 9,
       "recompensa": 50,
-      "truque": "glitch",
       "frases": [
         "seu computador encontrou um problema",
         "coletando dados do erro",
@@ -135,14 +135,16 @@
         "intro": ":( SEU PC ENCONTROU UM PROBLEMA.",
         "metade": "COLETANDO DADOS... 50%",
         "derrota": "reiniciando... 100%"
-      }
+      },
+      "truques": ["glitch"],
+      "dica": "A tela pisca e treme, mas a frase é a mesma: não se distraia."
     },
     "fato": "O sistema operacional gerencia memória, processos e arquivos — é a base onde todo software roda."
   },
   {
     "nome": "PROGRAMAÇÃO",
     "desc": "O código-fonte da empresa está cheio de bugs. Os acentos começam a aparecer!",
-    "dica": "Acentos aparecem a partir daqui. Neste andar, digitar sem acento ainda vale.",
+    "dica": "Acentos aparecem a partir daqui (sem acento ainda vale). Worms se replicam: elimine rápido!",
     "acentos": "leniente",
     "inimigos": 6,
     "maxTela": 2,
@@ -191,7 +193,6 @@
       "intervalo": 9.5,
       "dano": 10,
       "recompensa": 60,
-      "truque": "invocar",
       "frases": [
         "funciona na minha máquina",
         "quem escreveu esse código",
@@ -203,14 +204,16 @@
         "intro": "FUNCIONAVA ONTEM, EU JURO!",
         "metade": "CHAMANDO REFORÇOS...",
         "derrota": "bug... corrigido..."
-      }
+      },
+      "truques": ["invocar"],
+      "dica": "Ele chama capangas: tire-os do caminho antes que ataquem."
     },
     "fato": "Em SI você aprende lógica e programação em linguagens como Python, Java e JavaScript."
   },
   {
     "nome": "BANCO DE DADOS",
     "desc": "Alguém está apagando as tabelas da empresa!",
-    "dica": "Última chance: ainda dá para digitar sem acento neste andar.",
+    "dica": "Pacotes atravessam a tela até você: complete a palavra antes que cheguem.",
     "acentos": "leniente",
     "inimigos": 7,
     "maxTela": 2,
@@ -254,7 +257,6 @@
       "intervalo": 9.5,
       "dano": 11,
       "recompensa": 70,
-      "truque": "acelerar",
       "frases": [
         "select * from alunos",
         "cuidado com o drop table",
@@ -266,7 +268,9 @@
         "intro": "DROP TABLE EMPRESA; -- HAHAHA",
         "metade": "DELETE FROM VOCÊ!",
         "derrota": "rollback... concluído..."
-      }
+      },
+      "truques": ["rollback", "acelerar"],
+      "dica": "ROLLBACK: se parar de digitar no meio da frase, ele apaga suas últimas letras."
     },
     "fato": "Bancos de dados guardam as informações mais valiosas de uma empresa. Quem domina SQL é muito disputado no mercado!"
   },
@@ -315,7 +319,6 @@
       "intervalo": 9,
       "dano": 12,
       "recompensa": 80,
-      "truque": "glitch",
       "frases": [
         "a conexão caiu de novo",
         "sinal fraco no fundo da sala",
@@ -327,7 +330,9 @@
         "intro": "CONECTANDO... CONECTANDO... CON...",
         "metade": "SINAL: UMA BARRINHA",
         "derrota": "conectado. finalmente."
-      }
+      },
+      "truques": ["lag", "glitch"],
+      "dica": "Conexão instável: a frase chega em rajadas. Espere o pacote e continue."
     },
     "fato": "Redes conectam tudo: do Wi-Fi da sua casa aos data centers espalhados pelo mundo inteiro."
   },
@@ -372,7 +377,6 @@
       "intervalo": 9,
       "dano": 13,
       "recompensa": 90,
-      "truque": "invocar",
       "frases": [
         "o servidor não aguentou o tráfego",
         "escale horizontalmente, agora!",
@@ -384,14 +388,16 @@
         "intro": "UM MILHÃO DE ACESSOS POR SEGUNDO!",
         "metade": "MAIS REQUISIÇÕES CHEGANDO!",
         "derrota": "tráfego... normalizado..."
-      }
+      },
+      "truques": ["invocar"],
+      "dica": "Pico de acessos: os capangas não param de chegar."
     },
     "fato": "A computação em nuvem permite que sistemas atendam milhões de pessoas ao mesmo tempo."
   },
   {
     "nome": "SEGURANÇA DA INFORMAÇÃO",
     "desc": "Hackers invadiram o andar da segurança. Não confie em ninguém.",
-    "dica": "Inimigos mais resistentes: mantenha o combo alto!",
+    "dica": "Phishing: palavra VERMELHA com ⚠ é armadilha. NÃO digite: espere ela sumir.",
     "acentos": "estrito",
     "inimigos": 8,
     "maxTela": 3,
@@ -432,7 +438,6 @@
       "intervalo": 8.5,
       "dano": 15,
       "recompensa": 100,
-      "truque": "acelerar",
       "frases": [
         "seus arquivos foram criptografados!",
         "pague em bitcoins ou perca tudo.",
@@ -444,7 +449,9 @@
         "intro": "SEUS ARQUIVOS AGORA SÃO MEUS.",
         "metade": "O RESGATE ACABA DE DOBRAR!",
         "derrota": "chave... de... descriptografia... entregue..."
-      }
+      },
+      "truques": ["cripto", "acelerar"],
+      "dica": "Criptografia: a partir da 2ª frase, só a próxima letra aparece."
     },
     "fato": "Segurança da Informação é uma das áreas que mais contratam em TI — e a LGPD tornou isso ainda mais importante."
   },
@@ -492,7 +499,6 @@
       "intervalo": 8.5,
       "dano": 16,
       "recompensa": 110,
-      "truque": "invocar",
       "frases": [
         "eu fui treinada com os seus dados.",
         "correlação não é causalidade!",
@@ -504,7 +510,9 @@
         "intro": "CALCULEI 14 MILHÕES DE FUTUROS. VOCÊ PERDE EM TODOS.",
         "metade": "RECALCULANDO ROTA...",
         "derrota": "humano... superior... recalibrando..."
-      }
+      },
+      "truques": ["adaptativo", "invocar"],
+      "dica": "A I.A. estuda seus erros: as frases trazem as letras que você mais erra."
     },
     "fato": "Ciência de dados e IA transformam números em decisões. Analista de dados é uma das profissões mais buscadas."
   },
@@ -552,7 +560,6 @@
       "intervalo": 8,
       "dano": 18,
       "recompensa": 0,
-      "truque": "acelerar",
       "frases": [
         "o prazo é para ontem!",
         "o cliente mudou os requisitos de novo.",
@@ -565,7 +572,9 @@
         "intro": "TIC... TAC... O PROJETO VENCE HOJE.",
         "metade": "O CLIENTE PEDIU MAIS UMA FUNCIONALIDADE!",
         "derrota": "projeto... entregue... no... prazo..."
-      }
+      },
+      "truques": ["prazo", "acelerar"],
+      "dica": "Corra contra o relógio: quando o prazo estoura, ele fica mais rápido e mais forte."
     },
     "fato": "SI une tecnologia e gestão: você aprende a criar sistemas E a entender o negócio por trás deles."
   }

@@ -17,6 +17,8 @@ import { armazenamentoLocal } from './storage/armazenamento';
 import { espelharEmArquivo, noApp, restaurarBackups } from './storage/backup';
 import { validarNick } from './storage/nick';
 import { CHAVE_RANKING, criarRanking } from './storage/ranking';
+import { CHAVE_FANTASMA, criarFantasmas } from './storage/fantasma';
+import { Ritmo } from './render/ritmo';
 import { criarUI } from './ui/ui';
 import type { InvasaoGlobal } from './debug';
 
@@ -32,9 +34,10 @@ const jogo = document.getElementById('game')!;
 const entrada = document.getElementById('type-input') as HTMLInputElement;
 
 // ---------------- dados salvos ----------------
-await restaurarBackups([CHAVE_RANKING, CHAVE_AJUSTES]); // só no app de desktop
+await restaurarBackups([CHAVE_RANKING, CHAVE_AJUSTES, CHAVE_FANTASMA]); // só no app de desktop
 const armazenamento = armazenamentoLocal(espelharEmArquivo);
 const ranking = criarRanking(armazenamento);
+const fantasmas = criarFantasmas(armazenamento);
 const reduzirMovimento = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 const ajustes = criarAjustes(armazenamento, { efeitosReduzidos: reduzirMovimento });
 {
@@ -48,7 +51,7 @@ const ajustes = criarAjustes(armazenamento, { efeitosReduzidos: reduzirMovimento
 
 const battle = new Battle();
 ligarEfeitos(battle);
-const UI = criarUI({ battle, ranking, ajustes, config: CONFIG });
+const UI = criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG });
 
 // ---------------- escala para caber em qualquer tela ----------------
 // O jogo é desenhado em 960x540 "lógicos" e ampliado por CSS (pixel art com
@@ -116,8 +119,10 @@ const PASSO = 1 / 60;
 const MAX_PASSOS = 15; // se a máquina engasgar, não tenta "recuperar" segundos inteiros
 
 function atualizar(dt: number) {
-  FX.atualizar(dt);
-  if (UI.estado === 'batalha') battle.atualizar(dt);
+  // hit-stop e câmera lenta só mudam a velocidade do tempo da batalha
+  const dtJogo = UI.estado === 'batalha' ? Ritmo.escalar(dt) : dt;
+  FX.atualizar(dtJogo);
+  if (UI.estado === 'batalha') battle.atualizar(dtJogo);
 }
 
 function desenhar(t: number) {
@@ -189,6 +194,7 @@ window.INVASAO = {
   battle,
   ui: UI,
   ranking,
+  fantasmas,
   ajustes,
   config: CONFIG,
   sound: Sound,
@@ -235,6 +241,8 @@ function iniciarBot() {
     } else if (est === 'modo') tecla(teclaModo);
     else if (est === 'upgrade') tecla('1');
     else if (est === 'loja') tecla(battle.run!.inventario.cafe < 1 ? '1' : 'Enter');
+    else if (est === 'rota') tecla('1');
+    else if (est === 'duelo') tecla('Enter');
     // nick de 30 caracteres (o máximo) para validar o layout no pior caso
     else if (est === 'nick') {
       input('nick-input').value = 'Robô Testador da Computação ' + (10 + Math.floor(rnd() * 90));

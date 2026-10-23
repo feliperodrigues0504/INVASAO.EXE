@@ -3,23 +3,21 @@
 
 import { expect, NICK30, test } from './ajuda';
 
-test('banners com todos os nomes de andar e de chefão cabem', async ({ jogo }) => {
+test('banners com todos os nomes, descrições e dicas reais de andar e de chefão cabem', async ({ jogo }) => {
   await jogo.abrir();
   const problemas = await jogo.eval(j => {
     const el = document.getElementById('banner')!;
     const erros: string[] = [];
     for (const A of j.conteudo.ANDARES)
-      for (const [nome, chefe] of [
-        [A.nome, false],
-        [A.chefe.nome, true],
+      for (const [nome, chefe, sub, dica] of [
+        [A.nome, false, A.desc, A.dica],
+        [A.chefe.nome, true, `"${A.chefe.falas.intro}"`, A.chefe.dica ?? ''],
       ] as const) {
         el.className = chefe ? 'chefe' : '';
         document.getElementById('banner-top')!.textContent = 'ANDAR 9/9';
         document.getElementById('banner-title')!.textContent = nome;
-        document.getElementById('banner-sub')!.textContent =
-          'O último andar. O chefe final está esperando... e ele tem um prazo.';
-        document.getElementById('banner-tip')!.textContent =
-          'Use as teclas de acento: ´ + a = á   ~ + a = ã   ^ + e = ê   e a tecla ç';
+        document.getElementById('banner-sub')!.textContent = sub;
+        document.getElementById('banner-tip')!.textContent = dica;
         const t = document.getElementById('banner-title')!;
         if (t.scrollWidth > t.clientWidth + 1) erros.push(`"${nome}" estoura o banner`);
         if (el.offsetTop + el.offsetHeight > 440) erros.push(`"${nome}": banner desce até o prompt`);
@@ -78,7 +76,7 @@ test('palavra mais longa de cada andar cabe no rótulo do canvas (medida com a f
   expect(problemas).toEqual([]);
 });
 
-test('todas as 14 cartas de upgrade cabem no cartão', async ({ jogo }) => {
+test('todas as cartas de upgrade cabem no cartão (com a etiqueta de área)', async ({ jogo }) => {
   await jogo.abrir();
   const total = await jogo.eval(j => j.conteudo.UPGRADES.length);
   for (let i = 0; i < total; i += 3) {
@@ -93,13 +91,15 @@ test('todas as 14 cartas de upgrade cabem no cartão', async ({ jogo }) => {
     const problemas = await jogo.eval(() =>
       [...document.querySelectorAll<HTMLElement>('.card')].flatMap(c => {
         const desc = c.querySelector<HTMLElement>('.card-desc')!,
+          area = c.querySelector<HTMLElement>('.card-area')!,
           lvl = c.querySelector<HTMLElement>('.card-lvl')!;
         const nome = c.querySelector('.card-name')!.textContent;
         return [
           ...(c.scrollHeight > c.clientHeight + 1 ? [`carta "${nome}" transborda`] : []),
-          ...(desc.offsetTop + desc.offsetHeight > lvl.offsetTop
-            ? [`carta "${nome}": descrição encosta no nível`]
+          ...(desc.offsetTop + desc.offsetHeight > area.offsetTop
+            ? [`carta "${nome}": descrição encosta na etiqueta de área`]
             : []),
+          ...(area.offsetTop + area.offsetHeight > lvl.offsetTop ? [`carta "${nome}": área encosta no nível`] : []),
         ];
       }),
     );

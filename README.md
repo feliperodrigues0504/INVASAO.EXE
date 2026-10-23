@@ -60,30 +60,58 @@ Nas duas opções, para **sair**: **Alt + F4**.
 | ESC | Pausar (permite desligar o som ou desistir) |
 | ENTER | Avançar nos menus |
 
-- Depois do nick, o jogador escolhe o **modo**: **NORMAL** (9 andares, ~10 min) ou **RÁPIDO**
-  (3 andares: Suporte, Banco de Dados e Diretoria, ~3 min). Cada modo tem o seu ranking.
-- Acertar palavras **sem errar** aumenta o **combo**, que aumenta o dano.
+- Depois do nick, o jogador escolhe o **modo**:
+  - **NORMAL**: 9 andares, ~10 min;
+  - **RÁPIDO**: 3 andares (Suporte, Banco de Dados e Diretoria), ~3 min;
+  - **DUELO**: dois jogadores, um depois do outro, enfrentam o **mesmo desafio inicial** do modo rápido.
+    Durante a vez do jogador 2, o HUD mostra a diferença para o jogador 1, e no fim aparece o placar.
+
+  Normal e rápido têm rankings separados; as partidas do duelo entram no ranking do rápido.
+- Acertar palavras **sem errar** aumenta o **combo**, que aumenta o dano. No **combo x20** o
+  **overdrive** fica pronto: o próximo golpe causa dano dobrado.
+- Quando a **barra vermelha** de um inimigo enche, ele ataca. Terminar a palavra com a barra
+  **quase cheia** faz um **contra-ataque**: anula o ataque e causa dano extra.
+- **Palavras especiais:** $ dourada rende créditos extras; ✹ explosiva fere os outros
+  inimigos; ☣ corrompida cura o inimigo se você errar uma letra.
+- Após cada chefão:
+  1. escolha **1 de 3 cartas de upgrade** (**R** troca as 3 por créditos);
+  2. compre itens na **loja** (Dark Market);
+  3. escolha a **rota** do próximo andar: segura, ou **de elite** (inimigos mais fortes, créditos
+     x2, pontos x1,5). Às vezes aparece um **servidor misterioso** para apostar créditos.
+- **Sinergias:** 4 cartas da mesma área (Segurança, Performance ou Infraestrutura) ativam um bônus extra.
+  Algumas cartas são de **risco e recompensa**, como *Modo Root*: +40% de dano, mas errar custa vida.
+- **Fantasma do recordista:** o HUD mostra, em tempo real, quantos pontos você está à frente ou
+  atrás do 1º do ranking no mesmo momento da partida dele, além da sua velocidade (PPM).
 - **12 conquistas** (+300 pontos cada), avisadas na tela na hora em que são desbloqueadas.
 - No fim, um **relatório de desempenho**: velocidade e precisão por andar, as teclas que mais
   derrubaram o jogador, precisão nos acentos, conquistas e uma "análise dos seus dados".
-- Quando a **barra vermelha** de um inimigo enche, ele ataca.
-- Após cada chefão: escolha **1 de 3 cartas de upgrade** e depois compre itens na **loja** (Dark Market).
 - Andares 1-2: sem acentos. Andares 3-4: acentos aparecem, mas dá para digitar sem eles.
   Andares 5-9: **os acentos contam!**
 
+### Inimigos
+
+| Inimigo | O que faz |
+|---|---|
+| bug | inimigo básico |
+| glitch | **troca a palavra** se ninguém começar a digitá-la |
+| vírus | ao morrer, **infecta** o vizinho, que fica com uma palavra mais longa |
+| worm | **se replica** uma vez se não for removido a tempo |
+| pacote | **atravessa a tela** até você; se chegar, causa dano extra |
+| phishing | às vezes mostra uma palavra **vermelha com ⚠**: é armadilha, **não digite** |
+
 ### Os 9 andares
 
-| # | Andar | Chefão |
-|---|---|---|
-| 1 | Suporte Técnico | A Impressora Possuída |
-| 2 | Sistemas Operacionais | Tela Azul da Morte |
-| 3 | Programação | O Bug de Produção |
-| 4 | Banco de Dados | DROP TABLE |
-| 5 | Redes | O Wi-Fi da Faculdade |
-| 6 | Computação em Nuvem | Black Friday |
-| 7 | Segurança da Informação | Ransomware |
-| 8 | Dados & Inteligência Artificial | I.A. Rebelde |
-| 9 | Diretoria | O Prazo de Entrega |
+| # | Andar | Chefão | Truque do chefão |
+|---|---|---|---|
+| 1 | Suporte Técnico | A Impressora Possuída | a frase sai aos poucos da impressora |
+| 2 | Sistemas Operacionais | Tela Azul da Morte | glitch visual |
+| 3 | Programação | O Bug de Produção | invoca capangas |
+| 4 | Banco de Dados | DROP TABLE | **rollback**: parou de digitar, ele apaga suas últimas letras |
+| 5 | Redes | O Wi-Fi da Faculdade | **lag**: a frase chega em rajadas |
+| 6 | Computação em Nuvem | Black Friday | invoca capangas |
+| 7 | Segurança da Informação | Ransomware | **criptografia**: só a próxima letra aparece |
+| 8 | Dados & Inteligência Artificial | I.A. Rebelde | escolhe as frases com as letras **que você mais erra** |
+| 9 | Diretoria | O Prazo de Entrega | **relógio**: quando o prazo estoura, ele fica mais forte |
 
 ---
 
@@ -118,9 +146,11 @@ Textos, palavras, chefões e balanceamento ficam em **JSON**, sem precisar mexer
 
 - **`src/content/andares.json`**: os 9 andares (palavras, frases e falas dos chefões, curiosidades
   "Você sabia?", dificuldade: `hp`, `dano`, `atkBase`, `porLetra`...).
-- **`src/content/jogo.json`**: nome do curso (aparece na tela de fim de jogo), tempos do quiosque, PIN padrão, modos de jogo, conquistas,
-  atributos do jogador, cartas de upgrade (efeitos como `{ "atributo": "atk", "op": "mul", "valor": 1.25 }`)
-  e itens da loja.
+- **`src/content/jogo.json`**: nome do curso (aparece na tela de fim de jogo), tempos do quiosque,
+  PIN padrão, modos de jogo, conquistas, atributos do jogador, cartas de upgrade (efeitos como
+  `{ "atributo": "atk", "op": "mul", "valor": 1.25 }`), sinergias, itens da loja e os números de cada
+  mecânica em `mecanicas` (chance da armadilha, janela do contra-ataque, preço de trocar as cartas...).
+- **`src/content/andares.json`** também traz a **dica** de cada andar e de cada chefão, mostrada no banner.
 - **`src/content/sprites.ts`**: a pixel art (cada letra é uma cor da paleta e `.` é transparente).
 
 O conteúdo é **validado** ao abrir o jogo ([`src/content/schema.ts`](src/content/schema.ts)). Um erro
@@ -148,6 +178,7 @@ npm run app:build    # gera o executável do Windows (precisa do Rust)
 | `npm run test:e2e:robo` | Partidas completas jogadas por um robô em 4 velocidades + teste de resistência (lento) |
 | `npm run test:e2e:update` | Atualiza as screenshots de referência depois de uma mudança visual **intencional** |
 | `npm run test:mutation` | Teste de mutação (Stryker): injeta bugs na lógica e confere se os testes pegam cada um |
+| `npm run balanceamento` | Simula centenas de partidas de visitantes de 15 a 100 ppm e mostra até onde cada um chega (`reports/balanceamento.txt`). Use depois de mexer em qualquer número do `jogo.json` ou do `andares.json` |
 | `npm run validar` | Lint + formatação + tipos + unidade + E2E: tudo o que a CI roda |
 | `npm run lint` / `npm run format` | ESLint / Prettier |
 

@@ -14,7 +14,8 @@ export default defineConfig({
   },
   server: { port: 5173, strictPort: true },
   test: {
-    include: ['tests/unit/**/*.test.ts'],
+    // a simulação de balanceamento é lenta: só roda com npm run balanceamento
+    include: process.env.BALANCEAMENTO ? ['tests/balanceamento/**/*.test.ts'] : ['tests/unit/**/*.test.ts'],
     environment: 'node',
     coverage: {
       provider: 'v8',

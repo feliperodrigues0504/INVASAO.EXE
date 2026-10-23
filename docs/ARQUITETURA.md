@@ -94,6 +94,29 @@ As telas são montadas com `h()` ([ui/dom.ts](../src/ui/dom.ts)), que cria eleme
 texto em **nó de texto**, nunca em HTML. Um nick como `<img onerror=...>` aparece na tela exatamente
 assim, sem depender de lembrar de "escapar" cada valor (o antigo `innerHTML` + `esc()`).
 
+## Mecânicas de jogo (versão 4)
+
+Todas ficam na lógica pura (`battle.ts`) e todos os números ficam em `jogo.json` → `mecanicas`:
+
+- **Inimigos:** cada tipo tem uma `mecanica` (`armadilha`, `replicar`, `embaralhar`, `atravessar`,
+  `infectar`), tratada em `atualizarMecanica()` e, no caso do vírus, em `matar()`.
+- **Chefões:** uma lista de `truques` por chefão, tratada em `atualizarChefe()`. Truques que escondem o
+  texto (impressora, Wi-Fi, ransomware) usam `visivel`/`cifrado`. A interface não sabe deles: recebe a
+  frase já mascarada em `prompt().mascara` (`Battle.mascarar`).
+- **Contra-ataque, palavras especiais e overdrive:** dentro de `completar()`.
+- **Dano no jogador:** tudo passa por `ferir()` (ataque, pacote que chegou, phishing, Modo Root), que
+  cuida do combo, do backup e da morte num lugar só.
+- **Rota, servidor e cartas:** `escolherRota()`, `apostarServidor()`, `rerrolar()`, e as sinergias em
+  `aplicarUpgrade()`.
+- **Fantasma:** a lógica anota a pontuação a cada 5 s de batalha (`run.trilha`);
+  [storage/fantasma.ts](../src/storage/fantasma.ts) guarda a trilha do recordista de cada modo.
+- **Ritmo** ([render/ritmo.ts](../src/render/ritmo.ts)): o hit-stop e a câmera lenta só mudam a
+  velocidade do tempo no loop principal; as regras não sabem que existem.
+
+**Balanceamento:** `npm run balanceamento` simula centenas de partidas
+([tests/balanceamento](../tests/balanceamento/simular.test.ts)). Foi assim que os números da versão 4
+foram ajustados para não deixar o jogo mais fácil que a versão 3.
+
 ## Render em duas camadas
 
 O jogo é desenhado em 960×540 lógicos e ampliado para a tela:

@@ -83,7 +83,8 @@ const arp = (notas: number[], passo: number, opts: Tom) =>
 
 // prettier-ignore
 const sfx = {
-  tecla:   () => tone({ freq: 900 + Math.random() * 300, dur: 0.03, vol: 0.12 }),
+  // o tom da tecla sobe com o combo (até x30): o jogador OUVE que está indo bem
+  tecla:   (combo = 0) => tone({ freq: 900 + Math.min(combo, 30) * 22 + Math.random() * 150, dur: 0.03, vol: 0.12 }),
   erro:    () => tone({ freq: 110, type: 'sawtooth', dur: 0.15, vol: 0.25, slide: -40 }),
   golpe:   () => { noise({ dur: 0.12, vol: 0.35, freq: 3000 }); tone({ freq: 220, dur: 0.1, vol: 0.2, slide: -120 }); },
   critico: () => { noise({ dur: 0.2, vol: 0.4, freq: 5000 }); arp([880, 1320], 0.05, { dur: 0.1, vol: 0.2 }); },
@@ -100,6 +101,15 @@ const sfx = {
   vitoria: () => arp([523, 523, 784, 784, 880, 1046, 1318, 1568], 0.12, { dur: 0.2, vol: 0.2, type: 'square' }),
   gameOver:() => arp([440, 415, 392, 370, 349, 330, 165], 0.18, { dur: 0.3, vol: 0.22, type: 'sawtooth' }),
   boot:    () => arp([220, 330, 440, 660], 0.06, { dur: 0.08, vol: 0.12 }),
+  parry:   () => { arp([1500, 2250], 0.03, { dur: 0.09, vol: 0.22, type: 'triangle' }); noise({ dur: 0.08, vol: 0.25, freq: 6000 }); },
+  overdrivePronto: () => arp([392, 523, 659, 784, 1046], 0.05, { dur: 0.12, vol: 0.18, type: 'square' }),
+  overdrive: () => { noise({ dur: 0.5, vol: 0.5, freq: 2500 }); arp([1046, 784, 523, 262], 0.06, { dur: 0.2, vol: 0.25, type: 'sawtooth' }); },
+  armadilha: () => arp([600, 450, 300, 150], 0.07, { dur: 0.12, vol: 0.25, type: 'sawtooth' }),
+  bloqueada: () => tone({ freq: 140, type: 'square', dur: 0.04, vol: 0.1 }),
+  rollback: () => arp([880, 660, 440], 0.04, { dur: 0.06, vol: 0.18, type: 'square' }),
+  especial: () => arp([1318, 1568, 2093], 0.04, { dur: 0.08, vol: 0.18, type: 'triangle' }),
+  sinergia: () => arp([523, 659, 784, 1046, 1318, 1568], 0.06, { dur: 0.16, vol: 0.2, type: 'triangle' }),
+  moeda:   () => arp([1568, 2093], 0.05, { dur: 0.1, vol: 0.2, type: 'square' }),
 };
 
 // ---------------- música: baixo + arpejo em loop ----------------

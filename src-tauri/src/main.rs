@@ -13,7 +13,11 @@ use std::path::PathBuf;
 use tauri::Manager;
 
 // Só estes dados podem ser salvos/lidos como backup (as chaves do localStorage do jogo)
-const BACKUPS_PERMITIDOS: [&str; 2] = ["invasao_exe_ranking_v1", "invasao_exe_ajustes_v1"];
+const BACKUPS_PERMITIDOS: [&str; 3] = [
+    "invasao_exe_ranking_v1",
+    "invasao_exe_ajustes_v1",
+    "invasao_exe_fantasma_v1",
+];
 
 fn pasta_backups(app: &tauri::AppHandle) -> Result<PathBuf, String> {
     let dir = app

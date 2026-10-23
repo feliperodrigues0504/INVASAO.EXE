@@ -231,6 +231,7 @@ test('fuzz: 3000 teclas aleatórias em todas as telas sem erro, estado inválido
     'upgrade',
     'escolhendo',
     'loja',
+    'rota',
     'fim',
     'relatorio',
     'ranking',

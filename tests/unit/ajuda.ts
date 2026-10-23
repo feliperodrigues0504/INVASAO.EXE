@@ -97,18 +97,38 @@ export function novaBatalha(
     for (const ch of s) battle.digitar(ch);
   };
   // pula a onda: remove quem estiver vivo e espera o chefão terminar de aparecer
-  const ateChefe = () => {
+  // pula a onda e espera o chefão. Por padrão desliga os truques que ESCONDEM a frase
+  // (impressora, Wi-Fi, ransomware), para testes de outras regras poderem digitá-la direto.
+  const ateChefe = (opcoes: { manterTruques?: boolean } = {}) => {
     b().restante = 0;
     b().inimigos.forEach(e => (e.morrendo = true));
-    return simular(8, () => !!b().chefe && b().chefe!.nascendo <= 0);
+    const ok = simular(8, () => !!b().chefe && b().chefe!.nascendo <= 0);
+    if (ok && !opcoes.manterTruques) {
+      const c = b().chefe!;
+      c.truques = c.truques.filter(x => x !== 'impressao' && x !== 'lag' && x !== 'cripto');
+      c.visivel = null;
+      c.cifrado = false;
+    }
+    return ok;
   };
-  // um "jogador perfeito": digita sempre a letra certa do alvo atual
-  const botTecla = () => {
-    const est = b();
-    if (est.etapa !== 'ondas' && est.etapa !== 'chefe') return;
-    const alvo = est.alvo && !est.alvo.morrendo ? est.alvo : est.inimigos.find(e => !e.morrendo);
-    if (alvo) battle.digitar(alvo.texto[alvo.dig]);
+  // um "jogador perfeito": digita sempre a letra certa do alvo atual (e não cai em armadilhas)
+  const botTecla = () => tecladoPerfeito(battle);
+  // mostra a frase inteira do chefão (impressora/Wi-Fi/ransomware), para testes que a digitam de uma vez
+  const revelarChefe = () => {
+    const c = b().chefe!;
+    c.visivel = null;
+    c.cifrado = false;
+    return c;
   };
 
-  return { battle, run, b, vivos, n, zerar, simular, ateInimigos, digitar, ateChefe, botTecla };
+  return { battle, run, b, vivos, n, zerar, simular, ateInimigos, digitar, ateChefe, botTecla, revelarChefe };
+}
+
+// Jogador perfeito: nunca erra e desvia das palavras-armadilha do phishing
+export function tecladoPerfeito(battle: Battle) {
+  const est = battle.estado!;
+  if (est.etapa !== 'ondas' && est.etapa !== 'chefe') return;
+  if (est.alvo?.armadilha) battle.soltarAlvo();
+  const alvo = est.alvo && !est.alvo.morrendo ? est.alvo : est.inimigos.find(e => !e.morrendo && !e.armadilha);
+  if (alvo) battle.digitar(alvo.texto[alvo.dig]);
 }

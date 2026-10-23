@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { BAL } from '../../src/content';
 import { Battle } from '../../src/game/battle';
-import { novaBatalha } from './ajuda';
+import { novaBatalha, tecladoPerfeito } from './ajuda';
 
 const HABILIDADE = [
   'primeiro',
@@ -137,10 +137,7 @@ function jogadorPerfeito(modo: 'normal' | 'rapido') {
     const antes = concluidos;
     for (let t = 0; t < 900 && concluidos === antes; t += 0.05) {
       const b = battle.estado!;
-      if (b.etapa === 'ondas' || b.etapa === 'chefe') {
-        const alvo = b.alvo && !b.alvo.morrendo ? b.alvo : b.inimigos.find(e => !e.morrendo);
-        if (alvo) battle.digitar(alvo.texto[alvo.dig]);
-      }
+      if (b.etapa === 'ondas' || b.etapa === 'chefe') tecladoPerfeito(battle);
       battle.atualizar(0.05);
     }
     expect(concluidos, `${modo}: andar ${k + 1} não terminou`).toBe(antes + 1);

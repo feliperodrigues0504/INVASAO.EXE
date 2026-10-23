@@ -394,12 +394,12 @@ h1.glitch {
 /* ------------------------------------------------ escolha do modo */
 #modos {
   display: flex;
-  gap: 30px;
+  gap: 22px;
   margin: 10px 0 16px;
 }
 .modo {
   position: relative;
-  width: 330px;
+  width: 272px;
   padding: 22px 20px 20px;
   text-align: center;
   background: rgba(0, 0, 0, 0.92);
@@ -417,7 +417,7 @@ h1.glitch {
 }
 .modo-nome {
   font-family: var(--pixel);
-  font-size: 34px;
+  font-size: 30px;
   margin: 10px 0 12px;
   text-shadow: var(--brilho);
 }
@@ -426,7 +426,7 @@ h1.glitch {
   text-shadow: 0 0 10px rgba(255, 176, 0, 0.7);
 }
 .modo-desc {
-  font-size: 22px;
+  font-size: 20px;
   color: #eaffea;
   line-height: 1.15;
 }
@@ -1249,4 +1249,139 @@ h1.glitch {
     18px Consolas,
     monospace;
   white-space: pre-wrap;
+}
+
+/* ------------------------------------------------ versão 4: modos, cartas, rota, duelo, HUD */
+.modo.duelo {
+  border-color: var(--rosa);
+  box-shadow: 0 0 16px rgba(255, 43, 214, 0.35);
+}
+.modo.duelo .modo-nome {
+  color: var(--rosa);
+  text-shadow: 0 0 10px rgba(255, 43, 214, 0.7);
+}
+
+/* área da carta (sinergias): fica acima do nível, fora do fluxo do texto */
+.card-area {
+  position: absolute;
+  bottom: 34px;
+  left: 0;
+  right: 0;
+  font-family: var(--pixel);
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+#sinergias {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin: 2px 0 4px;
+  font-family: var(--pixel);
+  font-size: 12px;
+}
+.sinergia {
+  color: var(--cor);
+  opacity: 0.65;
+}
+.sinergia.ativa {
+  opacity: 1;
+  text-shadow: 0 0 8px var(--cor);
+}
+#rerrolar {
+  color: var(--ambar);
+}
+
+/* rota antes do andar */
+#rota-opcoes {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 8px 0 12px;
+}
+.rota-opcao {
+  padding: 10px 14px;
+  border: 1px solid var(--verde-medio);
+  background: rgba(0, 20, 0, 0.6);
+}
+.rota-opcao b {
+  display: block;
+  font-family: var(--pixel);
+  font-size: 16px;
+  color: var(--verde);
+}
+.rota-opcao small {
+  font-size: 19px;
+  color: #cfe9cf;
+}
+.rota-opcao.elite {
+  border-color: #ffd700;
+}
+.rota-opcao.elite b {
+  color: #ffd700;
+}
+.rota-opcao.servidor {
+  border-color: var(--rosa);
+}
+.rota-opcao.servidor b {
+  color: var(--rosa);
+}
+#rota-msg {
+  min-height: 26px;
+}
+
+/* resultado do duelo */
+#duelo-placar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  margin: 18px 0;
+}
+.duelo-jogador {
+  width: 300px;
+  padding: 12px 16px;
+  border: 1px solid var(--verde-medio);
+}
+.duelo-jogador.vencedor {
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 14px rgba(255, 215, 0, 0.45);
+}
+.duelo-nick {
+  font-family: var(--pixel);
+  font-size: 15px;
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.duelo-jogador div:not(.duelo-nick) {
+  display: flex;
+  justify-content: space-between;
+}
+.duelo-vs {
+  font-family: var(--pixel);
+  font-size: 28px;
+  color: var(--rosa);
+}
+
+/* PPM ao vivo e fantasma do recordista */
+#hud-extra {
+  position: absolute;
+  top: 178px;
+  left: 16px;
+  width: 260px;
+  font-size: 19px;
+  color: var(--verde-medio);
+  line-height: 1.25;
+}
+#hud-extra .fantasma {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+#hud-status .overdrive {
+  animation: pisca 0.5s steps(2, start) infinite;
+}
+.efeitos-reduzidos #hud-status .overdrive {
+  animation: none;
 }

@@ -1,6 +1,6 @@
 [package]
 name = "invasao-exe"
-version = "3.0.0"
+version = "4.0.0"
 description = "INVASÃO.EXE — RPG de digitação hacker (app de desktop do evento)"
 edition = "2021"
 publish = false
