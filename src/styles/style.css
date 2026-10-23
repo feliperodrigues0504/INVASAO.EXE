@@ -19,6 +19,9 @@
   --rosa: #ff2bd6;
   --ambar: #ffb000;
   --vermelho: #ff3355;
+  --dourado: #ffd700;
+  --roxo: #b46cff;
+  --laranja: #ff8c1a;
   --pixel: 'SilkscreenL', 'Silkscreen', 'Consolas', monospace;
   --term: 'VT323L', 'VT323', 'Consolas', monospace;
   --brilho: 0 0 6px rgba(57, 255, 20, 0.8), 0 0 18px rgba(57, 255, 20, 0.35);
@@ -781,10 +784,15 @@ h1.glitch {
   top: 44px;
   right: 16px;
   width: 266px;
-  font-size: 18px;
+  padding: 2px 6px;
+  font-size: 20px;
   line-height: 1.15;
   text-align: right;
   text-shadow: 1px 1px 0 #000;
+  background: rgba(0, 0, 0, 0.55);
+}
+#log:empty {
+  display: none;
 }
 #log div {
   white-space: nowrap;
@@ -792,7 +800,7 @@ h1.glitch {
   text-overflow: ellipsis;
 }
 #log div:not(:last-child) {
-  opacity: 0.6;
+  opacity: 0.75;
 }
 
 #prompt {
@@ -889,7 +897,7 @@ h1.glitch {
   float: right;
 }
 #items .slot.vazio {
-  opacity: 0.35;
+  opacity: 0.55;
 }
 
 /* ------------------------------------------------ banner */
@@ -1367,12 +1375,18 @@ h1.glitch {
 /* PPM ao vivo e fantasma do recordista */
 #hud-extra {
   position: absolute;
-  top: 178px;
+  top: 194px;
   left: 16px;
-  width: 260px;
-  font-size: 19px;
-  color: var(--verde-medio);
+  max-width: 270px;
+  padding: 2px 8px;
+  font-size: 21px;
+  color: var(--verde);
   line-height: 1.25;
+  background: rgba(0, 0, 0, 0.55);
+  text-shadow: 1px 1px 0 #000;
+}
+#hud-extra:empty {
+  display: none;
 }
 #hud-extra .fantasma {
   overflow: hidden;
@@ -1384,4 +1398,111 @@ h1.glitch {
 }
 .efeitos-reduzidos #hud-status .overdrive {
   animation: none;
+}
+
+/* ícones 8x8 em pixel art (content/icones.ts) no meio do texto */
+.icone-px {
+  display: inline-block;
+  vertical-align: -2px;
+  image-rendering: pixelated;
+  margin: 0 2px;
+}
+
+/* ------------------------------------------------ medidor de combo (até o overdrive) */
+#combo-medidor {
+  position: absolute;
+  top: 176px;
+  left: 16px;
+  width: 200px;
+  height: 8px;
+  border: 1px solid rgba(255, 43, 214, 0.6);
+  background: rgba(0, 0, 0, 0.7);
+}
+#combo-medidor:empty {
+  display: none;
+}
+#combo-medidor i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(to right, var(--ambar), var(--rosa));
+}
+#combo-medidor.pronto {
+  border-color: var(--rosa);
+  box-shadow: 0 0 10px var(--rosa);
+}
+
+/* ------------------------------------------------ vida baixa: borda vermelha pulsando */
+#perigo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 39;
+  opacity: 0;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0) 55%, rgba(255, 30, 60, 0.55) 100%);
+  transition: opacity 0.3s;
+}
+#perigo.ativo {
+  opacity: 1;
+  animation: perigo 0.9s ease-in-out infinite alternate;
+}
+@keyframes perigo {
+  from {
+    opacity: 0.45;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.efeitos-reduzidos #perigo.ativo {
+  animation: none;
+  opacity: 0.7;
+}
+
+/* ------------------------------------------------ transição entre telas (liga o monitor CRT) */
+.screen.entrando {
+  animation: ligarTela 0.22s ease-out;
+}
+@keyframes ligarTela {
+  from {
+    opacity: 0.2;
+    transform: scaleY(0.04);
+    filter: brightness(3);
+  }
+  60% {
+    opacity: 1;
+    transform: scaleY(1.02);
+  }
+  to {
+    transform: none;
+    filter: none;
+  }
+}
+.efeitos-reduzidos .screen.entrando {
+  animation: none;
+}
+
+/* ------------------------------------------------ modo vitrine (demonstração) */
+#vitrine {
+  position: absolute;
+  left: 50%;
+  bottom: 104px;
+  z-index: 45;
+  transform: translateX(-50%);
+  padding: 8px 22px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.85);
+  border: 2px solid var(--rosa);
+  box-shadow: 0 0 16px rgba(255, 43, 214, 0.5);
+}
+#vitrine b {
+  display: block;
+  font-family: var(--pixel);
+  font-size: 16px;
+  color: var(--rosa);
+  letter-spacing: 2px;
+}
+#vitrine span {
+  font-family: var(--pixel);
+  font-size: 13px;
+  color: var(--verde);
 }

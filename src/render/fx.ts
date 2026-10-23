@@ -6,6 +6,7 @@
 import { ALTURA, LARGURA } from '../game/battle';
 import { rv } from './aleatorio';
 import type { Sprite } from './sprites';
+import { COR } from '../paleta';
 
 export const FONTE = '"VT323L", "VT323", "Consolas", monospace';
 
@@ -85,22 +86,32 @@ function atualizar(dt: number) {
   tremor = Math.max(0, tremor - dt * 30);
 }
 
-function desenharFundo(ctx: CanvasRenderingContext2D, cor: string, t: number, comChao: boolean) {
+// comChao = estamos na batalha: a chuva fica mais fraca (não compete com as palavras),
+// o cenário do andar é desenhado por cima dela e o chão em grade por último.
+function desenharFundo(
+  ctx: CanvasRenderingContext2D,
+  cor: string,
+  t: number,
+  comChao: boolean,
+  cenario?: (ctx: CanvasRenderingContext2D, t: number) => void,
+) {
   ctx.fillStyle = '#000';
   ctx.fillRect(0, 0, LARGURA, ALTURA);
   ctx.font = `16px ${FONTE}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
+  const intensidade = comChao ? 0.45 : 1;
   for (let i = 0; i < colunas.length; i++) {
     const c = colunas[i];
     for (let j = 0; j < RASTRO; j++) {
       const y = c.y - j * COL;
       if (y < -COL || y > ALTURA) continue;
-      const a = j === 0 ? 0.55 : 0.28 * (1 - j / RASTRO);
+      const a = (j === 0 ? 0.55 : 0.28 * (1 - j / RASTRO)) * intensidade;
       ctx.fillStyle = j === 0 ? `rgba(200,255,200,${a})` : `rgba(57,255,20,${a})`;
       ctx.fillText(c.chars[j], i * COL + COL / 2, y);
     }
   }
+  cenario?.(ctx, t);
   if (comChao) desenharChao(ctx, cor, t);
 }
 
@@ -221,7 +232,7 @@ function texto(x: number, y: number, str: string, cor = '#fff', tam = 26, vida =
   textos.push({ x, y, str, cor, tam, vida });
 }
 
-function laser(x1: number, y1: number, x2: number, y2: number, cor = '#39ff14') {
+function laser(x1: number, y1: number, x2: number, y2: number, cor: string = COR.verde) {
   lasers.push({ x1, y1, x2, y2, cor, vida: 0.12, max: 0.12 });
 }
 

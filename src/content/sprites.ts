@@ -41,6 +41,39 @@ export const SPRITES: Record<string, SpriteDef> = {
       '...kbbbkbbbk....',
     ],
   },
+  // 2º quadro do estagiário: mãos levantadas (alterna com o 1º enquanto ele digita)
+  hacker_digita: {
+    pal: {
+      k: '#050805',
+      H: '#2f5c40',
+      h: '#1b3626',
+      s: '#d9a07a',
+      g: '#39ff14',
+      L: '#3b3f45',
+      p: '#1c2533',
+      b: '#0d0d0d',
+    },
+    grid: [
+      '.....kkkkkk.....',
+      '....kHHHHHHk....',
+      '...kHhhhhhhHk...',
+      '...kHhkkkkkhk...',
+      '...kHkssssskk...',
+      '...kHksgssgsk...',
+      '...kHkssssssk...',
+      '....kHkssssk....',
+      '....khhkkkkhk...',
+      '...kHhhhhhhhhk..',
+      '..kHhhsshhhhhhk.',
+      '..kHhhhhkLLLLLLk',
+      '..kHhhhhkLgggggLk',
+      '...khhhhkLLLLLLk',
+      '....kppppkkkkkk.',
+      '....kppkppk.....',
+      '....kppkppk.....',
+      '...kbbbkbbbk....',
+    ],
+  },
 
   // ---------------- inimigos comuns (A/B são trocadas por andar) ----------------
   bug: {

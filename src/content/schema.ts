@@ -181,6 +181,7 @@ export const JogoSchema = z.object({
     rankingTela: num.int().min(1),
     voltarTituloSeg: positivo,
     ociosoSeg: positivo,
+    vitrineSeg: num.min(0), // título parado por esse tempo → demonstração (0 = desligado)
     pinPadrao: z.string().regex(/^\d{4,12}$/, 'o PIN deve ter de 4 a 12 dígitos'),
   }),
   balanceamento: z.object({

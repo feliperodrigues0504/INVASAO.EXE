@@ -5,7 +5,8 @@
     "rankingTela": 10,
     "voltarTituloSeg": 25,
     "ociosoSeg": 60,
-    "pinPadrao": "2026"
+    "pinPadrao": "2026",
+    "vitrineSeg": 30
   },
   "balanceamento": {
     "comboPasso": 0.05,

@@ -47,6 +47,9 @@ Nas duas opções, para **sair**: **Alt + F4**.
 - Use um **teclado ABNT2** (com Ç) e, se possível, uma TV ou monitor grande.
 - Desative a suspensão de tela e o protetor de tela do Windows; deixe o notebook na tomada.
 - O som só começa depois da primeira tecla apertada (regra dos navegadores).
+- Com a tela título parada por 30 s, entra o **modo demonstração**: o computador joga sozinho, sem som,
+  para chamar quem passa. Qualquer tecla volta ao título. Não entra no ranking.
+  O tempo fica em `jogo.json` → `evento.vitrineSeg` (0 desliga).
 
 ---
 
@@ -112,6 +115,19 @@ Nas duas opções, para **sair**: **Alt + F4**.
 | 7 | Segurança da Informação | Ransomware | **criptografia**: só a próxima letra aparece |
 | 8 | Dados & Inteligência Artificial | I.A. Rebelde | escolhe as frases com as letras **que você mais erra** |
 | 9 | Diretoria | O Prazo de Entrega | **relógio**: quando o prazo estoura, ele fica mais forte |
+
+### Visual
+
+- Cada andar tem o **seu cenário** em pixel art (mesas e monitores no Suporte, racks na Nuvem, cofre na
+  Segurança, gráficos em Dados, sala de reunião na Diretoria...), e a troca de andar é feita por um
+  **elevador**.
+- O personagem anima ao digitar e pisca em vermelho ao levar dano; os inimigos "respiram"; o chefão
+  entra com uma silhueta vermelha durante o alerta.
+- Com a vida abaixo de 30%, as bordas da tela pulsam em vermelho. Uma barra abaixo do combo mostra
+  quanto falta para o **overdrive**.
+- Os símbolos (⚠, ★, 🏆...) são **ícones em pixel art** desenhados pelo jogo: aparecem iguais em
+  qualquer PC ou TV, sem depender de fonte de emoji. A palavra-armadilha tem **borda tracejada**, além
+  da cor, para quem não distingue o vermelho.
 
 ---
 

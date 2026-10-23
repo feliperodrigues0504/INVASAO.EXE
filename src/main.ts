@@ -19,8 +19,12 @@ import { validarNick } from './storage/nick';
 import { CHAVE_RANKING, criarRanking } from './storage/ranking';
 import { CHAVE_FANTASMA, criarFantasmas } from './storage/fantasma';
 import { Ritmo } from './render/ritmo';
+import { Animacao } from './render/animacao';
+import { desenharCenario } from './render/cenarios';
+import { desenharElevador, progressoElevador } from './render/elevador';
 import { criarUI } from './ui/ui';
 import type { InvasaoGlobal } from './debug';
+import { COR } from './paleta';
 
 const params = new URLSearchParams(location.search);
 const semente = /^\d+$/.test(params.get('semente') ?? '') ? Number(params.get('semente')) : null;
@@ -122,13 +126,20 @@ function atualizar(dt: number) {
   // hit-stop e câmera lenta só mudam a velocidade do tempo da batalha
   const dtJogo = UI.estado === 'batalha' ? Ritmo.escalar(dt) : dt;
   FX.atualizar(dtJogo);
-  if (UI.estado === 'batalha') battle.atualizar(dtJogo);
+  Animacao.atualizar(dtJogo);
+  if (UI.estado === 'batalha') {
+    UI.passoVitrine(dtJogo);
+    battle.atualizar(dtJogo);
+  }
 }
 
 function desenhar(t: number) {
   const b = battle.estado;
   const naBatalha = UI.mostraBatalha() && !!b;
-  FX.desenharFundo(ctx, naBatalha ? b!.A.cores[0] : '#39ff14', t, naBatalha);
+  const cenario = naBatalha
+    ? (c: CanvasRenderingContext2D, tt: number) => desenharCenario(c, battle.run!.andar, tt, b!.A.cores)
+    : undefined;
+  FX.desenharFundo(ctx, naBatalha ? b!.A.cores[0] : COR.verde, t, naBatalha, cenario);
   if (txt !== ctx) {
     txt.setTransform(1, 0, 0, 1, 0, 0);
     txt.clearRect(0, 0, canvasTexto.width, canvasTexto.height);
@@ -146,6 +157,9 @@ function desenhar(t: number) {
     txt.restore();
     ctx.restore();
   }
+  // elevador entre os andares (por cima da batalha, por baixo do banner)
+  const elev = UI.elevador();
+  if (elev) desenharElevador(ctx, progressoElevador(elev.segundos), elev.de, elev.para);
   UI.atualizarHud();
 }
 
