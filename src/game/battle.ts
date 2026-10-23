@@ -32,6 +32,7 @@ import {
 import { Emissor } from './eventos';
 import { criarRng, sementeAleatoria, sortear, type Rng } from './rng';
 import { semAcento, temAcento } from './texto';
+import { COR } from '../paleta';
 
 // Posições no mundo do jogo (centro x, "pé" y) — a tela lógica tem 960x540
 export const LARGURA = 960;
@@ -374,7 +375,7 @@ export class Battle extends Emissor<EventosBatalha> {
     if (!def) return false;
     run.conquistas.push(id);
     run.pontos += BAL.bonusConquista;
-    this.log(`> [★] conquista: ${def.nome} (+${BAL.bonusConquista})`, '#ffd700');
+    this.log(`> [★] conquista: ${def.nome} (+${BAL.bonusConquista})`, COR.recompensa);
     this.emit('conquista', def);
     return true;
   }
@@ -523,7 +524,7 @@ export class Battle extends Emissor<EventosBatalha> {
     this.novoTexto(e);
     e.atk = -2;
     this.falar(e, C.falas.intro);
-    this.log(`> [!] ${C.arquivo} em execução`, '#ff3355');
+    this.log(`> [!] ${C.arquivo} em execução`, COR.perigo);
     this.emit('chefeSurgiu', e);
   }
 
@@ -748,7 +749,7 @@ export class Battle extends Emissor<EventosBatalha> {
           const slot = this.slotLivre(SLOTS, SLOTS.length);
           if (slot >= 0) {
             const copia = this.criarInimigo(SLOTS, slot, MEC.replicar.fracaoVida, { tipo: 'worm', replica: true });
-            this.log(`> [!] ${e.nome} se replicou!`, '#ff3355');
+            this.log(`> [!] ${e.nome} se replicou!`, COR.perigo);
             this.emit('replicou', e, copia);
           }
         }
@@ -763,7 +764,7 @@ export class Battle extends Emissor<EventosBatalha> {
           if (b.alvo === e) b.alvo = null;
           this.emit('pacoteChegou', e);
           this.emit('desintegrar', e);
-          this.log(`> [!] ${e.nome} entregue: -${Math.round(e.dano * MEC.atravessar.multDano)}`, '#ff3355');
+          this.log(`> [!] ${e.nome} entregue: -${Math.round(e.dano * MEC.atravessar.multDano)}`, COR.perigo);
           this.ferir(Math.round(e.dano * MEC.atravessar.multDano), e);
         }
         break;
@@ -805,7 +806,7 @@ export class Battle extends Emissor<EventosBatalha> {
         c.dig = Math.max(this.inicioTexto(c.texto), c.dig - MEC.rollback.letras);
         c.ociosoT = MEC.rollback.ocioso - MEC.rollback.repetir;
         this.emit('rollback', c, antes - c.dig);
-        this.log(`> [!] ROLLBACK: ${antes - c.dig} letras desfeitas`, '#ff3355');
+        this.log(`> [!] ROLLBACK: ${antes - c.dig} letras desfeitas`, COR.perigo);
       }
     }
     // Prazo de Entrega: quando o relógio zera, ele fica furioso
@@ -815,7 +816,7 @@ export class Battle extends Emissor<EventosBatalha> {
       c.dano = Math.round(c.dano * MEC.prazo.multDano);
       this.calcularIntervalo(c);
       this.falar(c, 'PRAZO ESTOURADO!');
-      this.log('> [!] o prazo estourou: o chefão ficou mais rápido e mais forte', '#ff3355');
+      this.log('> [!] o prazo estourou: o chefão ficou mais rápido e mais forte', COR.perigo);
       this.emit('prazoEstourado', c);
     }
   }
@@ -912,14 +913,14 @@ export class Battle extends Emissor<EventosBatalha> {
         alvo.hp = Math.min(alvo.maxHp, alvo.hp + cura);
         alvo.especial = null;
         this.emit('especial', alvo, 'corrompida', cura);
-        this.log(`> [!] palavra corrompida: ${alvo.nome} recuperou ${cura}`, '#b46cff');
+        this.log(`> [!] palavra corrompida: ${alvo.nome} recuperou ${cura}`, COR.corrompido);
       }
     }
     // Modo Root: cada letra errada custa integridade
     if (run.p.danoPorErro > 0) this.ferir(run.p.danoPorErro, null);
     if (!this.estado || !ATIVO(this.b.etapa)) return;
     if (alvo && run.p.perdoaErro && alvo.erros === 1) return;
-    if (b.combo >= 5) this.log(`> combo x${b.combo} perdido`, '#ff3355');
+    if (b.combo >= 5) this.log(`> combo x${b.combo} perdido`, COR.perigo);
     b.combo = 0;
   }
 
@@ -938,7 +939,7 @@ export class Battle extends Emissor<EventosBatalha> {
 
     // phishing: completar a palavra-armadilha é "clicar no link"
     if (e.armadilha) {
-      this.log(`> [!] PHISHING: você caiu no golpe de ${e.nome}!`, '#ff3355');
+      this.log(`> [!] PHISHING: você caiu no golpe de ${e.nome}!`, COR.perigo);
       this.emit('armadilha', e);
       b.combo = 0;
       this.novoTexto(e, { semArmadilha: true });
@@ -968,7 +969,7 @@ export class Battle extends Emissor<EventosBatalha> {
       e.atk = 0;
       run.stats.parries++;
       this.emit('parry', e);
-      this.log('> CONTRA-ATAQUE!', '#00e5ff');
+      this.log('> CONTRA-ATAQUE!', COR.defesa);
     }
 
     // overdrive: o golpe guardado ao chegar no combo x20
@@ -976,7 +977,7 @@ export class Battle extends Emissor<EventosBatalha> {
       b.overdrive = false;
       dano = Math.round(dano * MEC.overdrive.multDano);
       this.emit('overdrive', e);
-      this.log('> OVERDRIVE!', '#ff2bd6');
+      this.log('> OVERDRIVE!', COR.especial);
     }
 
     if (b.combo >= 10) this.conquista('combo10');
@@ -990,14 +991,14 @@ export class Battle extends Emissor<EventosBatalha> {
       this.emit('comboMarco', b.combo);
       this.log(
         `> combo x${b.combo}! dano +${Math.round(Math.min(b.combo, BAL.comboMax) * BAL.comboPasso * 100)}%`,
-        '#ffd23f',
+        COR.combo,
       );
     }
     const n = MEC.overdrive.combo;
     if (Math.floor(b.combo / n) > Math.floor(comboAntes / n) && !b.overdrive) {
       b.overdrive = true;
       this.emit('overdrivePronto');
-      this.log(`> OVERDRIVE PRONTO: o próximo golpe causa ${MEC.overdrive.multDano}x de dano`, '#ff2bd6');
+      this.log(`> OVERDRIVE PRONTO: o próximo golpe causa ${MEC.overdrive.multDano}x de dano`, COR.especial);
     }
 
     // palavras especiais
@@ -1036,7 +1037,7 @@ export class Battle extends Emissor<EventosBatalha> {
         e.metade = true;
         this.calcularIntervalo(e);
         this.falar(e, b.A.chefe.falas.metade);
-        this.log(`> [!] ${e.nome} está furioso!`, '#ff3355');
+        this.log(`> [!] ${e.nome} está furioso!`, COR.perigo);
         this.emit('furia', e);
       } else if (this.rng() < 0.3) {
         this.falar(
@@ -1071,7 +1072,7 @@ export class Battle extends Emissor<EventosBatalha> {
       if (b.stats.itensUsados === 0) this.conquista('raiz');
       if (p.hp < p.maxHp * 0.1) this.conquista('porumfio');
       if (b.A.acentos === 'estrito') this.conquista('acentos');
-      this.log(`> [OK] ${e.nome} DERROTADO!`, '#39ff14');
+      this.log(`> [OK] ${e.nome} DERROTADO!`, COR.verde);
       this.emit('chefeDerrotado', b.A.chefe);
       // remove os capangas junto
       for (const o of b.inimigos)
@@ -1082,7 +1083,7 @@ export class Battle extends Emissor<EventosBatalha> {
       b.etapa = 'vitoria';
       b.tempoEtapa = 0;
     } else {
-      this.log(`> [OK] ${e.nome} removido (+${cred}₿)`, '#39ff14');
+      this.log(`> [OK] ${e.nome} removido (+${cred}₿)`, COR.verde);
       if (e.mecanica === 'infectar') this.infectar(e);
     }
   }
@@ -1096,7 +1097,7 @@ export class Battle extends Emissor<EventosBatalha> {
     vitimas.sort((x, y) => Math.abs(x.x - de.x) - Math.abs(y.x - de.x));
     const para = vitimas[0];
     this.novoTexto(para, { semArmadilha: true, longa: true });
-    this.log(`> [!] ${de.nome} infectou ${para.nome}`, '#ff3355');
+    this.log(`> [!] ${de.nome} infectou ${para.nome}`, COR.perigo);
     this.emit('infectou', de, para);
   }
 
@@ -1109,7 +1110,7 @@ export class Battle extends Emissor<EventosBatalha> {
     if (b.escudo > 0) {
       b.escudo--;
       this.emit('bloqueado', 'firewall', e);
-      this.log(`> firewall bloqueou ${e.nome}`, '#00e5ff');
+      this.log(`> firewall bloqueou ${e.nome}`, COR.defesa);
       return;
     }
     if (this.rng() < p.bloqueio) {
@@ -1117,7 +1118,7 @@ export class Battle extends Emissor<EventosBatalha> {
       return;
     }
     const dano = Math.round(e.dano * (e.chefe ? p.danoChefe : 1));
-    this.log(`> [!] ${e.nome} atacou: -${dano}`, '#ff3355');
+    this.log(`> [!] ${e.nome} atacou: -${dano}`, COR.perigo);
     this.ferir(dano, e);
   }
 
@@ -1130,7 +1131,7 @@ export class Battle extends Emissor<EventosBatalha> {
     b.stats.danoRecebido += dano;
     this.emit('dano', dano, atacante);
     if (atacante) {
-      if (b.combo >= 5) this.log(`> combo reduzido`, '#ff3355');
+      if (b.combo >= 5) this.log(`> combo reduzido`, COR.perigo);
       // Deploy na Sexta: o combo não perdoa
       b.combo = p.comboFragil ? 0 : Math.floor(b.combo / 2);
     }
@@ -1140,7 +1141,7 @@ export class Battle extends Emissor<EventosBatalha> {
         p.reviver--;
         p.hp = Math.round(p.maxHp * 0.5);
         this.emit('backupRestaurado');
-        this.log('> backup na nuvem restaurado!', '#ff2bd6');
+        this.log('> backup na nuvem restaurado!', COR.especial);
       } else {
         p.hp = 0;
         this.morrer();
@@ -1154,7 +1155,7 @@ export class Battle extends Emissor<EventosBatalha> {
     b.tempoEtapa = 0;
     b.alvo = null;
     this.emit('jogadorDerrotado');
-    this.log('> CONEXÃO PERDIDA', '#ff3355');
+    this.log('> CONEXÃO PERDIDA', COR.perigo);
   }
 
   // ---------------- itens ----------------
@@ -1191,7 +1192,7 @@ export class Battle extends Emissor<EventosBatalha> {
     if (it.id !== 'antivirus') this.emit('itemUsado', it.id, valor);
     run.inventario[it.id]--;
     b.stats.itensUsados++;
-    this.log(`> ${it.nome.toLowerCase()} executado`, '#ffb000');
+    this.log(`> ${it.nome.toLowerCase()} executado`, COR.item);
   }
 
   // ---------------- consultas para a interface ----------------
@@ -1273,7 +1274,7 @@ export class Battle extends Emissor<EventosBatalha> {
     aplicarEfeitos(run.p, s);
     run.p.hp = Math.min(run.p.hp, run.p.maxHp);
     run.sinergias.push(s.area);
-    this.log(`> [★] sinergia: ${s.nome}`, '#ffd700');
+    this.log(`> [★] sinergia: ${s.nome}`, COR.recompensa);
     this.emit('sinergia', s);
     return s;
   }

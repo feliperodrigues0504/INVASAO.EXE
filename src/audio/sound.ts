@@ -5,6 +5,7 @@
 let ctx: AudioContext | null = null;
 let master: GainNode, sfxBus: GainNode, musicBus: GainNode;
 let ligado = true;
+let mudo = false; // silêncio temporário (modo vitrine), sem mexer no ajuste do organizador
 let volume = 0.75; // 0..1, ajustado no painel do organizador
 const VOLUME_BASE = 0.8;
 
@@ -39,7 +40,7 @@ interface Tom {
 }
 
 function tone({ freq = 440, type = 'square', dur = 0.08, vol = 0.3, slide = 0, delay = 0, bus }: Tom) {
-  if (!ctx || !ligado) return;
+  if (!ctx || !ligado || mudo) return;
   const t = ctx.currentTime + delay;
   const osc = ctx.createOscillator();
   const g = ctx.createGain();
@@ -56,7 +57,7 @@ function tone({ freq = 440, type = 'square', dur = 0.08, vol = 0.3, slide = 0, d
 
 let noiseBuf: AudioBuffer | null = null;
 function noise({ dur = 0.15, vol = 0.3, delay = 0, freq = 2000, bus }: Omit<Tom, 'type' | 'slide'>) {
-  if (!ctx || !ligado) return;
+  if (!ctx || !ligado || mudo) return;
   if (!noiseBuf) {
     noiseBuf = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const d = noiseBuf.getChannelData(0);
@@ -176,6 +177,9 @@ export const Sound = {
   tocarMusica,
   pararMusica,
   alternar: () => (ligado = !ligado),
+  silenciar: (v: boolean) => {
+    mudo = v;
+  },
   definirLigado: (v: boolean) => {
     ligado = !!v;
   },

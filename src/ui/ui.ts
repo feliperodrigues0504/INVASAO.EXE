@@ -28,7 +28,9 @@ import type { Fantasma, GerenciadorFantasmas } from '../storage/fantasma';
 import { limparNick, validarNick } from '../storage/nick';
 import type { Posicao, Ranking } from '../storage/ranking';
 import { $, h, linhaStat, reiniciarAnimacao, trocar, type Filho } from './dom';
+import { comIcones, hidratarIcones } from './icones';
 import { MENUS_DA_PARTIDA, MENUS_SEM_PARTIDA, MOSTRA_BATALHA, transicaoValida, type Estado } from './estados';
+import { COR } from '../paleta';
 
 const TELAS = [
   'screen-title',
@@ -80,6 +82,9 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
   let confirmarApagarAte = 0;
   let cachePrompt = '';
   let cacheHud: Record<string, string> = {};
+  let vitrine = false; // modo demonstração (robô jogando na tela título parada)
+  let relogioVitrine = 0;
+  let inicioBanner = 0; // quando começou o banner do andar (transição de elevador)
   let duelo: { fase: 1 | 2; semente: number; resultados: ResultadoDuelo[]; trilhaJ1: Fantasma | null } | null = null;
   let fantasma: Fantasma | null = null; // contra quem o jogador corre (recordista ou jogador 1 do duelo)
 
@@ -108,6 +113,8 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
 
   function mostrar(id: Tela | null) {
     TELAS.forEach(t => ocultar(t, t !== id));
+    // transição: a tela nova "liga" como um monitor CRT
+    if (id) reiniciarAnimacao($(id), () => $(id).classList.add('entrando'));
   }
 
   // Única porta de entrada para mudar de estado: confere a tabela de transições
@@ -138,6 +145,9 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
     limparTimers();
     limparConquistas();
     duelo = null; // próximo visitante: duelo pela metade não continua
+    vitrine = false;
+    Sound.silenciar(false);
+    ocultar('vitrine');
     Sound.pararMusica();
     ocultar('hud');
     ocultar('banner');
@@ -235,6 +245,7 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
     cacheHud = {};
     cachePrompt = '';
     irPara('banner');
+    inicioBanner = agora();
     focar();
     banner(rotuloAndar(), A.nome, A.desc, A.dica, 'normal');
     Sound.sfx.levelUp();
@@ -243,18 +254,18 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
       irPara('batalha');
       $<HTMLInputElement>('type-input').value = '';
       Sound.tocarMusica('normal');
-      logLinha(`> andar ${battle.posicao()}: ${A.nome.toLowerCase()}`, '#39ff14');
+      logLinha(`> andar ${battle.posicao()}: ${A.nome.toLowerCase()}`, COR.verde);
     });
   }
 
   function banner(topo: string, titulo: string, sub: string, dica: string, tipo: 'normal' | 'chefe') {
     const el = $('banner');
     el.className = tipo === 'chefe' ? 'chefe' : '';
-    $('banner-top').textContent = topo;
+    trocar($('banner-top'), comIcones(topo));
     $('banner-title').textContent = titulo;
     $('banner-title').setAttribute('data-text', titulo);
     $('banner-sub').textContent = sub || '';
-    $('banner-tip').textContent = dica || '';
+    trocar($('banner-tip'), comIcones(dica || ''));
     reiniciarAnimacao(el);
   }
 
@@ -285,7 +296,7 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
       h(
         'div',
         null,
-        h('small', null, `★ CONQUISTA DESBLOQUEADA · +${BAL.bonusConquista}`),
+        h('small', null, comIcones(`★ CONQUISTA DESBLOQUEADA · +${BAL.bonusConquista}`)),
         def.nome,
         h('i', null, def.desc),
       ),
@@ -306,6 +317,10 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
 
   // ================= ANDAR CONCLUÍDO =================
   battle.on('andarConcluido', () => {
+    if (vitrine) {
+      irTitulo();
+      return;
+    }
     const r = run();
     battle.registrarAndar(true);
     if (battle.ehUltimo()) {
@@ -407,7 +422,7 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
   // ================= LOJA =================
   function irLoja() {
     const msg = $('shop-msg');
-    msg.textContent = sinergiaNova ?? '';
+    trocar(msg, comIcones(sinergiaNova ?? ''));
     msg.className = 'gold';
     sinergiaNova = null;
     renderLoja();
@@ -564,6 +579,10 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
   battle.on('gameOver', () => fimDeJogo(false));
 
   function fimDeJogo(venceu: boolean) {
+    if (vitrine) {
+      irTitulo();
+      return;
+    }
     limparTimers();
     Sound.pararMusica();
     const r = run();
@@ -628,7 +647,7 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
     trocar(
       $('end-rank'),
       pos <= 3
-        ? h('span', { class: 'gold' }, `🏆 ${pos}º LUGAR NO RANKING${nomeModo}!`)
+        ? h('span', { class: 'gold' }, comIcones(`🏆 ${pos}º LUGAR NO RANKING${nomeModo}!`))
         : [`posição no ranking${nomeModo.toLowerCase()}: `, h('b', null, `${pos}º`), ` de ${ultimoResultado.total}`],
       h('div', { class: 'cta' }, `Gostou? Conheça o curso de ${CONFIG.curso}!`),
     );
@@ -662,7 +681,7 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
     }
     // vence quem fez mais pontos; empate se igual
     const vencedor = j1.pontos === j2.pontos ? null : j1.pontos > j2.pontos ? j1 : j2;
-    $('duelo-titulo').textContent = vencedor ? `🏆 ${vencedor.nick} VENCEU O DUELO!` : 'EMPATE!';
+    trocar($('duelo-titulo'), comIcones(vencedor ? `🏆 ${vencedor.nick} VENCEU O DUELO!` : 'EMPATE!', 4));
     const coluna = (j: ResultadoDuelo, n: number) =>
       h(
         'div',
@@ -726,7 +745,7 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
       $('rel-teclas'),
       teclas.length
         ? teclas.map(([ch, n]) => h('span', { class: 'chip' }, ch === ' ' ? '␣' : ch, h('small', null, `${n}x`)))
-        : h('span', { class: 'rel-vazio' }, 'nenhuma! 👏'),
+        : h('span', { class: 'rel-vazio' }, comIcones('★ nenhuma! precisão total')),
     );
     const totAc = s.acentoOk + s.acentoErro;
     const seg = Math.round(s.tempo);
@@ -774,7 +793,7 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
         h('td', null, r.conquistas.length),
       );
     const linhas: Filho[] = [
-      h('tr', null, ...['#', 'NICK', 'PONTOS', 'ANDAR', 'PPM', 'PREC.', '★'].map(t => h('th', null, t))),
+      h('tr', null, ...['#', 'NICK', 'PONTOS', 'ANDAR', 'PPM', 'PREC.', '★'].map(t => h('th', null, comIcones(t)))),
       lista.slice(0, n).map(linha),
     ];
     const meu = lista.findIndex(r => r.id === meuId);
@@ -979,7 +998,10 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
   function atualizarHud() {
     const r = battle.run,
       b = battle.estado;
-    if (!r || !b || $('hud').classList.contains('hidden')) return;
+    const hudVisivel = !!r && !!b && !$('hud').classList.contains('hidden');
+    // vida baixa: borda vermelha pulsando (só com o HUD na tela)
+    $('perigo').classList.toggle('ativo', hudVisivel && !!r && r.p.hp > 0 && r.p.hp / r.p.maxHp < 0.3);
+    if (!r || !b || !hudVisivel) return;
     const p = r.p;
     definir('hud-nick', `@${r.nick}`);
     definir('hud-andar', `${rotuloAndar()} · ${b.A.nome}`);
@@ -1002,7 +1024,7 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
     if (b.overdrive) status.push(['pink overdrive', '⚡ OVERDRIVE']);
     if (b.elite) status.push(['gold', '★ ELITE']);
     definir('hud-status', JSON.stringify(status), () =>
-      status.map(([cls, txt], i) => [i ? ' ' : '', h('span', { class: cls }, txt)]),
+      status.map(([cls, txt], i) => [i ? ' ' : '', h('span', { class: cls }, comIcones(txt))]),
     );
 
     // velocidade ao vivo e o fantasma (recordista do modo, ou o jogador 1 no duelo)
@@ -1017,7 +1039,7 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
     }
     definir('hud-extra', `${ppm}|${linhaFantasma}|${classeFantasma}`, () => [
       h('div', null, `PPM ${ppm}`),
-      linhaFantasma ? h('div', { class: `fantasma ${classeFantasma}` }, linhaFantasma) : null,
+      linhaFantasma ? h('div', { class: `fantasma ${classeFantasma}` }, comIcones(linhaFantasma)) : null,
     ]);
 
     const mult = Math.round(Math.min(b.combo, BAL.comboMax) * BAL.comboPasso * 100);
@@ -1025,6 +1047,14 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
       b.combo > 1 ? [`COMBO x${b.combo}`, h('small', null, `dano +${mult}%`)] : null,
     );
     $('hud-combo').classList.toggle('quente', b.combo >= 10);
+
+    // medidor até o próximo overdrive (cheio = overdrive pronto)
+    const n = MEC.overdrive.combo;
+    const progresso = b.overdrive ? 1 : (b.combo % n) / n;
+    definir('combo-medidor', b.combo > 0 || b.overdrive ? progresso.toFixed(2) : '', () =>
+      b.combo > 0 || b.overdrive ? h('i', { style: { width: `${Math.round(progresso * 100)}%` } }) : null,
+    );
+    $('combo-medidor').classList.toggle('pronto', b.overdrive);
 
     definir('items', ITENS.map(it => r.inventario[it.id]).join(','), () =>
       ITENS.map((it, i) => {
@@ -1089,14 +1119,56 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
     .querySelectorAll<HTMLElement>('.modo')
     .forEach(el => el.addEventListener('click', () => escolherModo(el.dataset.modo as ModoId)));
 
+  // ================= MODO VITRINE (demonstração) =================
+  // Com a tela título parada, o robô joga um andar sorteado, sem som e sem
+  // ranking, com o aviso "aperte qualquer tecla para jogar". Qualquer tecla
+  // ou clique volta ao título.
+  function iniciarVitrine() {
+    vitrine = true;
+    relogioVitrine = 0;
+    Sound.silenciar(true);
+    limparConquistas();
+    battle.novaPartida('DEMO', 'normal', { semente: sementeUrl() ?? Math.floor(Math.random() * 1e9) });
+    run().debug = true; // não entra no ranking nem vira fantasma
+    battle.irParaAndar(Math.floor(Math.random() * ANDARES.length));
+    fantasma = null;
+    estado = 'carregando'; // como o atalho de desenvolvimento: começa direto no andar
+    iniciarAndar();
+    ocultar('vitrine', false);
+  }
+
+  // O "jogador" da demonstração: ~90 ppm, erra 3% das letras e desvia das armadilhas
+  const PASSO_VITRINE = 0.13;
+  function passoVitrine(dt: number) {
+    if (!vitrine || estado !== 'batalha') return;
+    relogioVitrine += dt;
+    while (relogioVitrine >= PASSO_VITRINE) {
+      relogioVitrine -= PASSO_VITRINE;
+      const b = battle.estado;
+      const r = battle.run;
+      if (!b || !r || (b.etapa !== 'ondas' && b.etapa !== 'chefe')) return;
+      if (r.p.hp < r.p.maxHp * 0.35 && r.inventario.patch > 0) battle.usarItem(1);
+      if (b.alvo?.armadilha) battle.soltarAlvo();
+      const alvo = b.alvo && !b.alvo.morrendo ? b.alvo : b.inimigos.find(e => !e.morrendo && !e.armadilha);
+      if (alvo) battle.digitar(Math.random() < 0.03 ? '#' : alvo.texto[alvo.dig]);
+    }
+  }
+
   // ================= INATIVIDADE =================
   // Se um visitante abandona o jogo num menu, o jogo encerra sozinho
   // (a pontuação é salva) e volta ao título para a próxima pessoa.
   function atividade() {
     ultimaAtividade = performance.now();
+    if (vitrine) irTitulo(); // alguém mexeu: a demonstração termina
   }
   setInterval(() => {
-    if (performance.now() - ultimaAtividade < CONFIG.ociosoSeg * 1000) return;
+    const parado = performance.now() - ultimaAtividade;
+    // título parado: o robô joga uma demonstração para chamar quem passa
+    if (estado === 'titulo' && !vitrine && CONFIG.vitrineSeg > 0 && parado >= CONFIG.vitrineSeg * 1000) {
+      iniciarVitrine();
+      return;
+    }
+    if (parado < CONFIG.ociosoSeg * 1000) return;
     if (MENUS_SEM_PARTIDA.includes(estado)) {
       atividade();
       irTitulo();
@@ -1178,6 +1250,12 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
     // item ou pausa pode repetir (antes, segurar o 5 no painel confirmava sozinho e
     // apagava o ranking — AUD-05). Letras seguradas continuam digitando normalmente.
     const repetida = e.repeat;
+    if (vitrine) {
+      // qualquer tecla encerra a demonstração e volta ao título (sem disparar ação)
+      e.preventDefault();
+      atividade();
+      return;
+    }
     atividade();
     if (estado === 'carregando') {
       e.preventDefault();
@@ -1224,6 +1302,7 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
   }
 
   aplicarEfeitosReduzidos();
+  hidratarIcones($('game')); // ícones em pixel art no HTML estático (tutorial etc.)
 
   return {
     irTitulo,
@@ -1238,6 +1317,15 @@ export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }:
       return estado;
     },
     mostraBatalha: () => MOSTRA_BATALHA.includes(estado),
+    passoVitrine,
+    get emVitrine() {
+      return vitrine;
+    },
+    // transição de elevador: segundos desde o início do banner e os andares (de → para)
+    elevador: () =>
+      estado === 'banner' && battle.run
+        ? { segundos: (agora() - inicioBanner) / 1000, de: battle.posicao() - 1, para: battle.posicao() }
+        : null,
   };
 }
 

@@ -2,10 +2,12 @@
 //  Desenho da batalha no canvas. Só LÊ o estado da batalha (nunca altera).
 // =====================================================================
 
-import { ALTURA, LARGURA, POS_JOGADOR, type Battle, type Inimigo } from '../game/battle';
+import { ALTURA, ESCALA_CHEFE, LARGURA, POS_CHEFE, POS_JOGADOR, type Battle, type Inimigo } from '../game/battle';
 import { rv } from './aleatorio';
+import { Animacao } from './animacao';
 import { FONTE } from './fx';
 import { sprite, type Sprite } from './sprites';
+import { COR } from '../paleta';
 
 export const ESCALA_JOGADOR = 6;
 export const spriteDe = (e: Inimigo): Sprite => sprite(e.sprite, e.escala, e.paleta);
@@ -22,12 +24,20 @@ export function desenharBatalha(
   if (!b) return;
   // jogador
   if (b.etapa !== 'morte') {
-    const spr = sprite('hacker', ESCALA_JOGADOR);
+    // digitando: alterna os quadros das mãos; ferido: pisca em vermelho
+    const quadro = Animacao.digitando && Math.floor(t * 14) % 2 === 0 ? 'hacker_digita' : 'hacker';
+    const spr = sprite(quadro, ESCALA_JOGADOR);
     const bob = Math.sin(t * 2.5) * 2;
     const x = Math.round(POS_JOGADOR.x - spr.w / 2),
       y = Math.round(POS_JOGADOR.y - spr.h + bob);
     sombra(ctx, POS_JOGADOR.x, POS_JOGADOR.y, 44);
     ctx.drawImage(spr.canvas, x, y);
+    if (Animacao.ferido > 0) {
+      ctx.save();
+      ctx.globalAlpha = 0.75 * Animacao.ferido;
+      ctx.drawImage(spr.ferido, x, y);
+      ctx.restore();
+    }
     // brilho da tela do notebook
     ctx.save();
     const brilho = ctx.createRadialGradient(x + 78, y + 75, 2, x + 78, y + 75, 34);
@@ -38,8 +48,8 @@ export function desenharBatalha(
     ctx.restore();
     if (b.escudo > 0) {
       ctx.save();
-      ctx.strokeStyle = '#00e5ff';
-      ctx.shadowColor = '#00e5ff';
+      ctx.strokeStyle = COR.defesa;
+      ctx.shadowColor = COR.defesa;
       ctx.shadowBlur = 14;
       ctx.globalAlpha = 0.5 + Math.sin(t * 5) * 0.2;
       ctx.lineWidth = 3;
@@ -50,6 +60,7 @@ export function desenharBatalha(
     }
   }
 
+  if (b.etapa === 'alerta') desenharEntradaChefe(ctx, b.A.chefe.sprite, b.tempoEtapa, t);
   const ordenados = b.inimigos.slice().sort((x, y) => x.y - y.y);
   for (const e of ordenados) desenharInimigo(ctx, e, t);
   for (const e of ordenados) if (!e.chefe && !e.morrendo) desenharRotulo(ctx, txt, e, b.alvo === e);
@@ -100,7 +111,7 @@ function desenharInimigo(ctx: CanvasRenderingContext2D, e: Inimigo, t: number) {
   if (e.elite) {
     ctx.save();
     ctx.globalAlpha = 0.35 + Math.sin(t * 4) * 0.15;
-    ctx.strokeStyle = '#ffd700';
+    ctx.strokeStyle = COR.recompensa;
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.ellipse(e.x, e.y, spr.w * 0.48, spr.w * 0.13, 0, 0, Math.PI * 2);
@@ -123,7 +134,10 @@ function desenharInimigo(ctx: CanvasRenderingContext2D, e: Inimigo, t: number) {
     ctx.globalCompositeOperation = 'lighter';
     ctx.drawImage(img, x + 6, y);
   } else {
-    ctx.drawImage(img, x, y);
+    // "respiração": leve compressão vertical, com os pés sempre no chão
+    const resp = e.nascendo > 0 ? 1 : 1 + Math.sin(t * 2.6 + e.bob) * 0.035;
+    const alt = Math.round(spr.h * resp);
+    ctx.drawImage(img, x, y + spr.h - alt, spr.w, alt);
   }
   ctx.restore();
 
@@ -131,10 +145,10 @@ function desenharInimigo(ctx: CanvasRenderingContext2D, e: Inimigo, t: number) {
   const larg = e.chefe ? 170 : 84;
   const bx = Math.round(e.x - larg / 2),
     by = e.y + 8;
-  if (!e.chefe) barra(ctx, bx, by, larg, 6, e.hp / e.maxHp, '#39ff14');
+  if (!e.chefe) barra(ctx, bx, by, larg, 6, e.hp / e.maxHp, COR.verde);
   const prop = Math.max(0, e.atk / e.intervalo);
   const perigo = prop > 0.8 && Math.floor(t * 10) % 2 === 0;
-  barra(ctx, bx, by + (e.chefe ? 0 : 9), larg, e.chefe ? 7 : 5, prop, perigo ? '#ffffff' : '#ff3355');
+  barra(ctx, bx, by + (e.chefe ? 0 : 9), larg, e.chefe ? 7 : 5, prop, perigo ? COR.branco : COR.perigo);
 }
 
 function barra(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, prop: number, cor: string) {
@@ -163,26 +177,27 @@ function desenharRotulo(ctx: CanvasRenderingContext2D, txt: CanvasRenderingConte
   const estilo = estiloRotulo(e);
   ctx.fillStyle = e.armadilha ? 'rgba(60,0,8,0.92)' : alvo ? 'rgba(0,40,0,0.92)' : 'rgba(0,0,0,0.8)';
   ctx.fillRect(x - 8, y - 15, total + 16, 30);
-  ctx.strokeStyle = estilo?.cor ?? (alvo ? '#39ff14' : 'rgba(57,255,20,0.35)');
+  ctx.strokeStyle = estilo?.cor ?? (alvo ? COR.verde : 'rgba(57,255,20,0.35)');
   ctx.lineWidth = alvo || estilo ? 2 : 1;
+  // armadilha: moldura TRACEJADA, além da cor (quem não distingue vermelho também percebe)
+  if (e.armadilha) ctx.setLineDash([6, 4]);
   ctx.strokeRect(x - 8 + 0.5, y - 15 + 0.5, total + 16, 30);
+  if (e.armadilha) ctx.setLineDash([]);
   if (estilo) {
-    // selo à direita da palavra: ⚠ armadilha, $ dourada, ✹ explosiva, ☣ corrompida
-    txt.font = `18px ${FONTE}`;
-    txt.fillStyle = estilo.cor;
-    txt.fillText(estilo.selo, x + total + 12, y - 12);
-    txt.font = `${ROTULO.fonte}px ${FONTE}`;
+    // selo em pixel art no canto da palavra: alerta, moeda, explosão ou caveira corrompida
+    const icone = sprite(estilo.icone, 2);
+    txt.drawImage(icone.canvas, x + total + 2, y - 26);
   }
   if (alvo) {
-    txt.fillStyle = e.armadilha ? '#ff3355' : '#39ff14';
+    txt.fillStyle = e.armadilha ? COR.perigo : COR.verde;
     txt.fillText('▶', x - 26, y);
   }
   let cx = x;
   for (let i = 0; i < e.texto.length; i++) {
-    if (e.armadilha) txt.fillStyle = i < e.dig ? '#ff99aa' : '#ff3355';
-    else if (i < e.dig) txt.fillStyle = '#39ff14';
-    else if (i === e.dig) txt.fillStyle = alvo ? '#ffffff' : '#e6ffe6';
-    else txt.fillStyle = alvo ? '#d0ffd0' : '#9fbf9f';
+    if (e.armadilha) txt.fillStyle = i < e.dig ? COR.perigoClaro : COR.perigo;
+    else if (i < e.dig) txt.fillStyle = COR.verde;
+    else if (i === e.dig) txt.fillStyle = alvo ? COR.branco : COR.verdeTexto;
+    else txt.fillStyle = alvo ? COR.verdeClaro : COR.verdeApagado;
     txt.fillText(e.texto[i], cx, y + 1);
     if (i === e.dig && alvo) txt.fillRect(cx, y + 12, larguras[i], 2);
     cx += larguras[i];
@@ -190,13 +205,13 @@ function desenharRotulo(ctx: CanvasRenderingContext2D, txt: CanvasRenderingConte
 }
 
 const ESTILOS_ESPECIAIS = {
-  dourada: { cor: '#ffd700', selo: '$' },
-  explosiva: { cor: '#ff8c1a', selo: '✹' },
-  corrompida: { cor: '#b46cff', selo: '☣' },
+  dourada: { cor: COR.recompensa, icone: 'moeda' },
+  explosiva: { cor: COR.explosao, icone: 'explosao' },
+  corrompida: { cor: COR.corrompido, icone: 'corrompido' },
 } as const;
 
-export function estiloRotulo(e: Inimigo): { cor: string; selo: string } | null {
-  if (e.armadilha) return { cor: '#ff3355', selo: '⚠' };
+export function estiloRotulo(e: Inimigo): { cor: string; icone: string } | null {
+  if (e.armadilha) return { cor: COR.perigo, icone: 'alerta' };
   return e.especial ? ESTILOS_ESPECIAIS[e.especial] : null;
 }
 
@@ -208,19 +223,19 @@ function desenharBarraChefe(ctx: CanvasRenderingContext2D, txt: CanvasRenderingC
   txt.font = `18px "SilkscreenL", "Silkscreen", ${FONTE}`;
   txt.textAlign = 'left';
   txt.textBaseline = 'bottom';
-  txt.fillStyle = '#ff3355';
+  txt.fillStyle = COR.perigo;
   txt.fillText(e.titulo ?? e.nome, x, y - 4, w); // maxWidth: nomes longos são comprimidos, nunca vazam
   txt.textAlign = 'right';
   txt.textBaseline = 'top';
   txt.font = `20px ${FONTE}`;
-  txt.fillStyle = '#ff99aa';
+  txt.fillStyle = COR.perigoClaro;
   txt.fillText(`${Math.max(0, Math.ceil(e.hp))}/${e.maxHp}`, x + w, y + h + 2);
   // Prazo de Entrega: relógio regressivo (pisca nos últimos 10 s)
   if (e.truques.includes('prazo')) {
     const seg = Math.max(0, Math.ceil(e.prazoT));
     const urgente = e.estourado || (seg <= 10 && Math.floor(t * 4) % 2 === 0);
     txt.textAlign = 'left';
-    txt.fillStyle = urgente ? '#ff3355' : '#ffd23f';
+    txt.fillStyle = urgente ? COR.perigo : COR.combo;
     txt.fillText(
       e.estourado ? 'PRAZO ESTOURADO!' : `PRAZO ${Math.floor(seg / 60)}:${String(seg % 60).padStart(2, '0')}`,
       x,
@@ -229,11 +244,11 @@ function desenharBarraChefe(ctx: CanvasRenderingContext2D, txt: CanvasRenderingC
   }
   if (e.elite) {
     txt.textAlign = 'right';
-    txt.fillStyle = '#ffd700';
+    txt.fillStyle = COR.recompensa;
     txt.font = `14px "SilkscreenL", "Silkscreen", ${FONTE}`;
     txt.fillText('ELITE', x + w, y - 22);
   }
-  barra(ctx, x, y, w, h, e.hp / e.maxHp, e.metade && Math.floor(t * 4) % 2 ? '#ff6680' : '#ff3355');
+  barra(ctx, x, y, w, h, e.hp / e.maxHp, e.metade && Math.floor(t * 4) % 2 ? COR.perigoPulso : COR.perigo);
   // segmentos
   ctx.fillStyle = 'rgba(0,0,0,0.5)';
   for (let i = 1; i < 10; i++) ctx.fillRect(x + (w / 10) * i, y, 1, h);
@@ -252,12 +267,46 @@ function desenharFala(ctx: CanvasRenderingContext2D, txt: CanvasRenderingContext
   ctx.globalAlpha = alfa;
   ctx.fillStyle = 'rgba(30,0,5,0.92)';
   ctx.fillRect(x, y - 16, w, 32);
-  ctx.strokeStyle = '#ff3355';
+  ctx.strokeStyle = COR.perigo;
   ctx.lineWidth = 2;
   ctx.strokeRect(x + 0.5, y - 15.5, w, 32);
   ctx.globalAlpha = 1;
   txt.globalAlpha = alfa;
-  txt.fillStyle = '#ffccd5';
+  txt.fillStyle = COR.perigoTexto;
   txt.fillText(fala, x + w / 2, y + 1, w - 16);
   txt.globalAlpha = 1;
+}
+
+// Entrada do chefão (durante o alerta, antes de ele surgir): a tela escurece, faixas
+// vermelhas passam e a silhueta gigante dele desliza da direita para o lugar dele.
+const DURACAO_ALERTA = 3.2;
+export function desenharEntradaChefe(ctx: CanvasRenderingContext2D, nomeSprite: string, tempo: number, t: number) {
+  const spr = sprite(nomeSprite, ESCALA_CHEFE);
+  const escala = 1.6;
+  const w = spr.w * escala,
+    h = spr.h * escala;
+  const chegada = Math.min(1, tempo / 0.9);
+  const suave = 1 - Math.pow(1 - chegada, 3); // desacelera no fim
+  const sumindo = Math.max(0, Math.min(1, (tempo - (DURACAO_ALERTA - 0.6)) / 0.6));
+  ctx.save();
+  ctx.globalAlpha = 0.6 * (1 - sumindo);
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, LARGURA, ALTURA);
+  // faixas vermelhas de "ameaça" correndo na diagonal
+  ctx.globalAlpha = 0.18 * (1 - sumindo);
+  ctx.fillStyle = COR.perigo;
+  const desloc = (t * 120) % 80;
+  for (let x = -ALTURA; x < LARGURA + 80; x += 80) {
+    ctx.beginPath();
+    ctx.moveTo(x + desloc, 0);
+    ctx.lineTo(x + desloc + 30, 0);
+    ctx.lineTo(x + desloc + 30 + ALTURA, ALTURA);
+    ctx.lineTo(x + desloc + ALTURA, ALTURA);
+    ctx.fill();
+  }
+  // silhueta vermelha gigante
+  const x = LARGURA + 40 - (LARGURA + 40 - (POS_CHEFE.x - w / 2)) * suave;
+  ctx.globalAlpha = 0.85 * (1 - sumindo);
+  ctx.drawImage(spr.ferido, Math.round(x), Math.round(POS_CHEFE.y - h + 30), w, h);
+  ctx.restore();
 }
