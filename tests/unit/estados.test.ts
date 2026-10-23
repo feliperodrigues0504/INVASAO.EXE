@@ -36,6 +36,7 @@ describe('máquina de estados das telas', () => {
       'upgrade',
       'escolhendo',
       'loja',
+      'rota',
       'banner',
       'batalha',
       'pausa',
@@ -48,10 +49,32 @@ describe('máquina de estados das telas', () => {
       expect(transicaoValida(ciclo[i - 1], ciclo[i]), `${ciclo[i - 1]} → ${ciclo[i]}`).toBe(true);
   });
 
+  it('o ciclo do duelo (jogador 1 → jogador 2 → resultado) é válido', () => {
+    const ciclo: Estado[] = [
+      'titulo',
+      'nick',
+      'modo',
+      'tutorial',
+      'banner',
+      'batalha',
+      'fim',
+      'nick',
+      'tutorial',
+      'banner',
+      'batalha',
+      'fim',
+      'duelo',
+      'titulo',
+    ];
+    for (let i = 1; i < ciclo.length; i++)
+      expect(transicaoValida(ciclo[i - 1], ciclo[i]), `${ciclo[i - 1]} → ${ciclo[i]}`).toBe(true);
+  });
+
   it('pulos proibidos são rejeitados', () => {
     expect(transicaoValida('titulo', 'batalha')).toBe(false);
     expect(transicaoValida('fim', 'ranking')).toBe(false); // relatório não pode ser pulado
     expect(transicaoValida('upgrade', 'loja')).toBe(false); // passa por "escolhendo"
+    expect(transicaoValida('loja', 'banner')).toBe(false); // passa pela escolha de rota
     expect(transicaoValida('nick', 'painel')).toBe(false);
   });
 

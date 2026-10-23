@@ -4,6 +4,7 @@ import { armazenamentoMemoria, type Armazenamento } from '../../src/storage/arma
 import { dataLocal, gerarCsv, nomeArquivoCsv } from '../../src/storage/csv';
 import { limparNick, NICK_MAX, validarNick } from '../../src/storage/nick';
 import { CHAVE_RANKING, criarRanking, LIMITE_POR_MODO } from '../../src/storage/ranking';
+import { criarFantasmas } from '../../src/storage/fantasma';
 
 const resultado = (nick: string, pontos: number, extra: Record<string, unknown> = {}) => ({
   nick,
@@ -251,5 +252,39 @@ describe('ajustes do painel', () => {
     expect(hashPin('2026')).toMatch(/^[0-9a-f]{8}$/);
     expect(hashPin('2026')).toBe(hashPin('2026'));
     expect(hashPin('2026')).not.toBe(hashPin('2027'));
+  });
+});
+
+describe('fantasma do recordista', () => {
+  it('só vira fantasma quem bate o recorde do modo; cada modo tem o seu', () => {
+    const f = criarFantasmas(armazenamentoMemoria());
+    expect(f.registrar('normal', 'Ana', 100, [0, 50, 100])).toBe(true);
+    expect(f.registrar('normal', 'Bia', 90, [0, 90])).toBe(false);
+    expect(f.registrar('rapido', 'Bia', 90, [0, 90])).toBe(true);
+    expect(f.carregar('normal')?.nick).toBe('Ana');
+    expect(f.carregar('rapido')?.nick).toBe('Bia');
+    f.limpar();
+    expect(f.carregar('normal')).toBeNull();
+  });
+
+  it('dados corrompidos são ignorados e o nick é cortado', () => {
+    const arm = armazenamentoMemoria({
+      invasao_exe_fantasma_v1: JSON.stringify({
+        normal: { nick: 'x'.repeat(50), pontos: 10, trilha: [1, 2] },
+        rapido: { nick: 'y', pontos: 'muito', trilha: [] },
+      }),
+    });
+    const f = criarFantasmas(arm);
+    expect(f.carregar('normal')?.nick).toHaveLength(NICK_MAX);
+    expect(f.carregar('rapido')).toBeNull();
+    expect(criarFantasmas(armazenamentoMemoria({ invasao_exe_fantasma_v1: 'lixo{' })).carregar('normal')).toBeNull();
+  });
+
+  it('pontos do recordista no mesmo momento da partida', () => {
+    const f = criarFantasmas(armazenamentoMemoria());
+    const g = { nick: 'A', pontos: 300, trilha: [0, 100, 300] };
+    expect(f.pontosNoMomento(g, 0, 5)).toBe(0);
+    expect(f.pontosNoMomento(g, 7, 5)).toBe(100);
+    expect(f.pontosNoMomento(g, 999, 5)).toBe(300); // depois do fim: a pontuação final
   });
 });

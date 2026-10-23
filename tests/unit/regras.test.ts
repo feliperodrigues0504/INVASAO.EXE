@@ -230,7 +230,7 @@ describe('ondas de inimigos', () => {
     const t = novaBatalha(0, { maxHp: 1e6, hp: 1e6 });
     t.ateChefe();
     const c = t.b().chefe!;
-    expect(t.battle.prompt()).toEqual({ texto: c.texto, dig: c.dig, nome: c.nome, ativo: false });
+    expect(t.battle.prompt()).toEqual({ texto: c.texto, dig: c.dig, nome: c.nome, ativo: false, mascara: c.texto });
     t.battle.digitar(c.texto[c.dig]);
     expect(t.battle.prompt()).toMatchObject({ texto: c.texto, dig: c.dig, ativo: true });
   });

@@ -1,6 +1,6 @@
 {
   "name": "invasao-exe",
-  "version": "3.0.0",
+  "version": "4.0.0",
   "private": true,
   "description": "INVASÃO.EXE — RPG de digitação hacker para o Observatório de Cursos (Sistemas de Informação)",
   "type": "module",
@@ -21,6 +21,7 @@
     "test:e2e:robo": "playwright test --project=robo",
     "test:e2e:update": "playwright test --project=jogo --update-snapshots",
     "test:mutation": "stryker run",
+    "balanceamento": "node -e \"process.env.BALANCEAMENTO=1;require('child_process').execSync('npx vitest run',{stdio:'inherit',env:process.env})\" && node -e \"console.log(require('fs').readFileSync('reports/balanceamento.txt','utf8'))\"",
     "validar": "npm run lint && npm run format:check && npm run typecheck && npm run test && npm run test:e2e",
     "icone": "node scripts/gerar-icone.ts && tauri icon src-tauri/app-icon.png",
     "app:dev": "tauri dev",
