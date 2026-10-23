@@ -27,7 +27,7 @@ O que cada etapa cobre (equivalência com o antigo `validar.ps1`):
    validado por schema (`tests/unit/conteudo.test.ts`), inclusive referências cruzadas.
 2. **Sem internet** → todo teste E2E **bloqueia a rede** e reprova qualquer acesso externo; o build é um
    único `dist/index.html` aberto via `file://`, como no evento.
-3. **Bateria de testes** → 169 testes de unidade (Vitest) + 38 testes E2E (Playwright) com teclado real,
+3. **Bateria de testes** → 218 testes de unidade (Vitest) + 46 testes E2E (Playwright) com teclado real,
    acentos ABNT2, quiosque, painel, layout no pior caso, segurança e **fuzz de 3000 teclas**.
 4. **Desempenho em tempo real** → `tests/e2e/desempenho.spec.ts`: cena mais pesada, sem GPU, em 960×540 e
    1920×1080; orçamento de 16,6 ms por quadro (60 fps).
@@ -170,6 +170,43 @@ Cada bug ganhou um teste que reprova o código antigo (controle negativo feito p
 Observado e **não alterado** (risco baixo, decisão de design): com o upgrade Autocomplete, digitar a 1ª letra
 "por hábito" escolhe o primeiro inimigo cuja palavra começa com ela, mesmo que dois comecem igual.
 
+### Versão 4 — jogabilidade (23/10/2026)
+
+Pedido: mais variedade e estratégia **sem diminuir a dificuldade**.
+
+| ID | Funcionalidade | Coberto por |
+|---|---|---|
+| FEAT-06 | **Mecânica própria para cada inimigo**: phishing (palavra-armadilha), worm (se replica), glitch (troca a palavra), pacote (atravessa a tela), vírus (infecta o vizinho) | 6 testes de unidade + captura `06b-mecanicas` |
+| FEAT-07 | **Truques temáticos dos chefões**: impressora (frase sai aos poucos), DROP TABLE (rollback), Wi-Fi (lag), Ransomware (criptografia), I.A. (usa seus erros), Prazo (relógio) | 6 testes de unidade + E2E da impressora |
+| FEAT-08 | **Contra-ataque**, **palavras especiais** (dourada, explosiva, corrompida) e **overdrive** no combo x20 | 3 testes de unidade |
+| FEAT-09 | **Cartas de risco e recompensa** (Modo Root, Deploy na Sexta, Café Duplo), **sinergias** por área e **rerrolar** as cartas | 17 testes de carta + sinergia + rerrolar (unidade e E2E) |
+| FEAT-10 | **Rota** antes de cada andar (segura ou de elite) e **servidor misterioso** (aposta) | testes de unidade + E2E + captura `10b-rota` |
+| FEAT-11 | **Fantasma do recordista** e **PPM ao vivo** no HUD | testes de unidade (trilha) + 2 E2E |
+| FEAT-12 | **Modo duelo** (revezamento, mesma semente) com placar final | E2E do duelo completo + captura `16-duelo` |
+| FEAT-13 | **Game feel**: tom da tecla sobe com o combo, hit-stop em crítico/contra-ataque/overdrive, câmera lenta no golpe final do chefão | revisão (áudio e tempo) |
+| FEAT-14 | Dicas no banner de cada andar e de cada chefão explicando a mecânica que estreia ali | teste de layout com as dicas reais |
+
+O duelo é em **revezamento** e não com dois teclados ao mesmo tempo: navegador e app não conseguem
+distinguir de qual teclado veio cada tecla.
+
+**Balanceamento** (`npm run balanceamento`, 24 partidas por cenário, mesmas sementes; vitórias):
+
+| Cenário | Versão 3 | Versão 4 (antes do ajuste) | **Versão 4 (final)** |
+|---|---|---|---|
+| Normal, sem itens, 100 ppm | 0 | 5 | **1** |
+| Normal, Patch, 60 ppm | 1 | 2 | **1** |
+| Normal, Patch, 80 ppm | 4 | 8 | **5** |
+| Normal, Patch, 100 ppm | 16 | 23 | **20** |
+| Rápido, sem itens, 80 ppm | 2 | 3 | **2** |
+| Rápido, sem itens, 100 ppm | 14 | 8 | **8** |
+| Rápido, Patch, 60 ppm | 13 | 14 | **11** |
+| Até 45 ppm (todos os modos) | 0 | 0 | **0** |
+
+| ID | Sev. | Área | Achado durante o desenvolvimento | Correção | Status |
+|---|---|---|---|---|---|
+| BAL-03 | Média | Balanceamento | A primeira versão das mecânicas deixou o modo normal **mais fácil** para quem digita rápido (Patch, 80 ppm: 4 → 8 vitórias). A **ablação** (desligar uma mecânica de cada vez) mostrou que a causa era o contra-ataque, disparado sem querer por jogadores rápidos | Janela do contra-ataque de 90% para 97% da barra; sinergias com 4 cartas e bônus menores; Modo Root +40%; overdrive 2x. Somando os cenários, ficou um pouco mais difícil que a v3 | ✅ Corrigido |
+| TST-12 | — | Testes | O "jogador perfeito" dos testes digitava as palavras-armadilha e perdia o combo, e a conquista x20 parecia impossível | O robô desvia das armadilhas, como um bom jogador | ✅ Corrigido |
+
 ---
 
 ## 4. Rodadas de validação
@@ -304,3 +341,7 @@ monitor do evento, versão do navegador, limpar o ranking antes de abrir o estan
 28. **Teclas seguradas repetem**: toda ação de confirmação ("aperte 2 vezes") precisa ignorar `repeat` (AUD-05).
 29. **Datas para pessoas, em horário local**: guardar em ISO/UTC, mas mostrar e nomear arquivos no fuso de
     quem lê (AUD-02).
+30. **Mudança de jogabilidade se mede, não se sente**: simular centenas de partidas antes e depois, com as
+    mesmas sementes. Um ajuste que parecia neutro (contra-ataque) facilitou o jogo e só a simulação mostrou (BAL-03).
+31. **Ablação acha a causa**: desligar uma mecânica por vez e medir mostra qual delas pesa, em vez de
+    ajustar todas no chute.
