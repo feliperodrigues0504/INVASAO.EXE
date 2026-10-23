@@ -10,6 +10,7 @@ import type { sprite } from './render/sprites';
 import type { GerenciadorAjustes } from './storage/ajustes';
 import type { validarNick } from './storage/nick';
 import type { Ranking } from './storage/ranking';
+import type { GerenciadorFantasmas } from './storage/fantasma';
 import type { UI } from './ui/ui';
 
 export interface InvasaoGlobal {
@@ -18,6 +19,7 @@ export interface InvasaoGlobal {
   battle: Battle;
   ui: UI;
   ranking: Ranking;
+  fantasmas: GerenciadorFantasmas;
   ajustes: GerenciadorAjustes;
   config: Config;
   sound: typeof Sound;

@@ -17,12 +17,14 @@ export const ESTADOS = [
   'upgrade',
   'escolhendo',
   'loja',
+  'rota',
   'fim',
   'relatorio',
   'ranking',
   'pin',
   'painel',
   'novoPin',
+  'duelo',
 ] as const;
 
 export type Estado = (typeof ESTADOS)[number];
@@ -41,19 +43,22 @@ export const TRANSICOES: Record<Estado, readonly Estado[]> = {
   concluido: ['upgrade', 'fim'],
   upgrade: ['escolhendo', 'fim'],
   escolhendo: ['loja'],
-  loja: ['banner', 'fim'],
-  fim: ['relatorio'],
+  loja: ['rota', 'fim'],
+  rota: ['banner', 'fim'],
+  // duelo: depois do jogador 1 vem o nick do jogador 2; depois do 2, o resultado
+  fim: ['relatorio', 'nick', 'duelo'],
   relatorio: ['ranking'],
   ranking: [],
   pin: ['painel'],
   painel: ['novoPin'],
   novoPin: ['painel'],
+  duelo: [],
 };
 
 // Telas em que existe uma partida em andamento (abandono = encerra e salva)
-export const MENUS_DA_PARTIDA: readonly Estado[] = ['concluido', 'upgrade', 'loja', 'pausa'];
+export const MENUS_DA_PARTIDA: readonly Estado[] = ['concluido', 'upgrade', 'loja', 'rota', 'pausa'];
 // Telas antes da partida (abandono = volta ao título)
-export const MENUS_SEM_PARTIDA: readonly Estado[] = ['nick', 'modo', 'tutorial', 'pin', 'painel', 'novoPin'];
+export const MENUS_SEM_PARTIDA: readonly Estado[] = ['nick', 'modo', 'tutorial', 'pin', 'painel', 'novoPin', 'duelo'];
 // Telas em que o canvas da batalha aparece no fundo
 export const MOSTRA_BATALHA: readonly Estado[] = ['batalha', 'banner', 'pausa'];
 

@@ -5,10 +5,11 @@
 // =====================================================================
 
 import { Sound } from '../audio/sound';
-import { POS_JOGADOR, type Battle } from '../game/battle';
+import { POS_JOGADOR, type Battle, type Inimigo } from '../game/battle';
 import { rv } from './aleatorio';
 import { ESCALA_JOGADOR, spriteDe } from './battleRenderer';
 import { FX } from './fx';
+import { Ritmo } from './ritmo';
 import { sprite } from './sprites';
 
 export function ligarEfeitos(battle: Battle) {
@@ -16,10 +17,13 @@ export function ligarEfeitos(battle: Battle) {
   const pyAviso = POS_JOGADOR.y - 120;
   const pyItem = POS_JOGADOR.y - 140;
 
-  battle.on('andarIniciado', () => FX.limpar());
+  battle.on('andarIniciado', () => {
+    FX.limpar();
+    Ritmo.limpar();
+  });
 
   battle.on('acerto', alvo => {
-    Sound.sfx.tecla();
+    Sound.sfx.tecla(battle.estado?.combo ?? 0);
     const topo = alvo.y - spriteDe(alvo).h / 2;
     FX.laser(px + 45, POS_JOGADOR.y - 38, alvo.x + (rv() - 0.5) * 30, topo + (rv() - 0.5) * 30);
   });
@@ -34,6 +38,7 @@ export function ligarEfeitos(battle: Battle) {
     if (crit) {
       FX.texto(e.x, topo - 44, 'CRÍTICO!', '#ff2bd6', 30, 0.9);
       Sound.sfx.critico();
+      Ritmo.impacto(0.05);
       FX.tremer(9);
     } else {
       Sound.sfx.golpe();
@@ -61,6 +66,7 @@ export function ligarEfeitos(battle: Battle) {
   });
   battle.on('chefeDerrotado', () => {
     Sound.sfx.chefeMorre();
+    Ritmo.camLenta(1.2);
     Sound.pararMusica();
     FX.tremer(20);
   });
@@ -73,7 +79,7 @@ export function ligarEfeitos(battle: Battle) {
   battle.on('dano', (dano, atacante) => {
     FX.texto(px + (rv() - 0.5) * 30, pyAviso, `-${dano}`, '#ff3355', 34);
     FX.faiscas(px, POS_JOGADOR.y - 50, '#ff3355', 16);
-    FX.tremer(atacante.chefe ? 16 : 10);
+    FX.tremer(atacante?.chefe ? 16 : 10);
     Sound.sfx.dano();
   });
   battle.on('backupRestaurado', () => {
@@ -98,4 +104,63 @@ export function ligarEfeitos(battle: Battle) {
     } else FX.texto(px, pyItem, 'FIREWALL +2', '#00e5ff', 30);
     Sound.sfx.item();
   });
+
+  // ---------------- mecânicas da versão 4 ----------------
+  const topo = (e: Inimigo) => e.y - spriteDe(e).h;
+  battle.on('teclaBloqueada', () => Sound.sfx.bloqueada());
+  battle.on('parry', e => {
+    FX.texto(e.x, topo(e) - 60, 'CONTRA-ATAQUE!', '#00e5ff', 30, 1.1);
+    FX.faiscas(e.x, e.y - spriteDe(e).h / 2, '#00e5ff', 20);
+    FX.tremer(6);
+    Ritmo.impacto(0.08);
+    Sound.sfx.parry();
+  });
+  battle.on('especial', (e, tipo, valor) => {
+    if (tipo === 'dourada') {
+      FX.texto(e.x, topo(e) - 60, `+${valor} ₿`, '#ffd700', 30, 1.3);
+      Sound.sfx.moeda();
+    } else if (tipo === 'explosiva') {
+      FX.faiscas(e.x, e.y - spriteDe(e).h / 2, '#ff8c1a', 40);
+      FX.texto(e.x, topo(e) - 60, 'BOOM!', '#ff8c1a', 32, 0.9);
+      FX.tremer(10);
+      Sound.sfx.critico();
+    } else {
+      FX.texto(e.x, topo(e) - 60, `CORROMPIDA +${valor}`, '#b46cff', 26, 1.2);
+      Sound.sfx.negado();
+    }
+  });
+  battle.on('overdrivePronto', () => {
+    FX.texto(px, pyItem - 30, 'OVERDRIVE PRONTO!', '#ff2bd6', 28, 1.6);
+    Sound.sfx.overdrivePronto();
+  });
+  battle.on('overdrive', e => {
+    FX.texto(e.x, topo(e) - 70, 'OVERDRIVE!', '#ff2bd6', 40, 1.2);
+    FX.faiscas(e.x, e.y - spriteDe(e).h / 2, '#ff2bd6', 50);
+    FX.tremer(16);
+    Ritmo.impacto(0.12);
+    Sound.sfx.overdrive();
+  });
+  battle.on('armadilha', e => {
+    FX.texto(e.x, topo(e) - 60, 'PHISHING! VOCÊ CLICOU NO LINK', '#ff3355', 24, 1.6);
+    Sound.sfx.armadilha();
+  });
+  battle.on('replicou', (_original, copia) => {
+    FX.faiscas(copia.x, copia.y - 40, '#39ff14', 18);
+    FX.texto(copia.x, topo(copia) - 60, 'REPLICOU!', '#ff3355', 24, 1.2);
+  });
+  battle.on('embaralhou', e => FX.texto(e.x, topo(e) - 60, '¿?¡!', '#e6ffe6', 22, 0.7));
+  battle.on('infectou', (de, para) => {
+    FX.laser(de.x, de.y - 40, para.x, para.y - 40, '#b46cff');
+    FX.texto(para.x, topo(para) - 60, 'INFECTADO!', '#b46cff', 24, 1.2);
+  });
+  battle.on('pacoteChegou', e => FX.texto(e.x, topo(e) - 40, 'ENTREGUE!', '#ff3355', 26, 1));
+  battle.on('rollback', (e, n) => {
+    FX.texto(e.x, topo(e) - 50, `ROLLBACK -${n}`, '#ff3355', 28, 1.1);
+    Sound.sfx.rollback();
+  });
+  battle.on('prazoEstourado', () => {
+    FX.tremer(14);
+    Sound.sfx.alerta();
+  });
+  battle.on('sinergia', () => Sound.sfx.sinergia());
 }

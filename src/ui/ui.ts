@@ -9,18 +9,22 @@ import {
   ANDARES,
   BAL,
   CONQUISTAS,
+  AREAS_INFO,
   ITENS,
+  MEC,
   MODOS,
   RARIDADES,
+  SINERGIAS,
   type Conquista,
   type ModoId,
   type Upgrade,
 } from '../content';
-import { temAcento, type Battle, type Partida } from '../game/battle';
+import { PASSO_TRILHA, temAcento, type Battle, type Partida } from '../game/battle';
 import { FX } from '../render/fx';
 import { hashPin, VOLUMES, type GerenciadorAjustes } from '../storage/ajustes';
 import { noApp, salvarCsvNoApp } from '../storage/backup';
 import { gerarCsv, nomeArquivoCsv } from '../storage/csv';
+import type { Fantasma, GerenciadorFantasmas } from '../storage/fantasma';
 import { limparNick, validarNick } from '../storage/nick';
 import type { Posicao, Ranking } from '../storage/ranking';
 import { $, h, linhaStat, reiniciarAnimacao, trocar, type Filho } from './dom';
@@ -40,17 +44,32 @@ const TELAS = [
   'screen-ranking',
   'screen-pin',
   'screen-panel',
+  'screen-rota',
+  'screen-duelo',
 ] as const;
 type Tela = (typeof TELAS)[number];
 
 interface Dependencias {
   battle: Battle;
   ranking: Ranking;
+  fantasmas: GerenciadorFantasmas;
   ajustes: GerenciadorAjustes;
   config: Config;
 }
 
-export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependencias) {
+// Duelo em revezamento: os dois jogadores enfrentam o mesmo desafio inicial (mesma semente)
+const MODO_DUELO: ModoId = 'rapido';
+interface ResultadoDuelo {
+  nick: string;
+  pontos: number;
+  andar: number;
+  totalAndares: number;
+  ppm: number;
+  precisao: number;
+  venceu: boolean;
+}
+
+export function criarUI({ battle, ranking, fantasmas, ajustes, config: CONFIG }: Dependencias) {
   let estado: Estado = 'carregando'; // só vira 'titulo' depois que as fontes carregam
   let travaAte = 0; // evita que um ENTER "vaze" de uma tela para outra
   let ultimaAtividade = performance.now();
@@ -61,6 +80,8 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
   let confirmarApagarAte = 0;
   let cachePrompt = '';
   let cacheHud: Record<string, string> = {};
+  let duelo: { fase: 1 | 2; semente: number; resultados: ResultadoDuelo[]; trilhaJ1: Fantasma | null } | null = null;
+  let fantasma: Fantasma | null = null; // contra quem o jogador corre (recordista ou jogador 1 do duelo)
 
   const agora = () => performance.now();
   const travar = (ms = 600) => {
@@ -116,6 +137,7 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
   function irTitulo() {
     limparTimers();
     limparConquistas();
+    duelo = null; // próximo visitante: duelo pela metade não continua
     Sound.pararMusica();
     ocultar('hud');
     ocultar('banner');
@@ -138,13 +160,21 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
     setEstado('nick', 'screen-nick');
     $<HTMLInputElement>('nick-input').value = '';
     $('nick-error').textContent = '';
-    const linhas = [
-      '> conectando ao servidor da empresa...',
-      '> conexão estabelecida.',
-      '> ALERTA: o prédio foi invadido por vírus!',
-      '> precisamos de alguém para limpar os andares.',
-      '> identifique-se, hacker:',
-    ];
+    const linhas =
+      duelo?.fase === 2
+        ? [
+            '> DUELO: o jogador 1 terminou.',
+            `> placar a bater: ${duelo.resultados[0]?.pontos ?? 0} pontos (${duelo.resultados[0]?.nick ?? ''}).`,
+            '> mesmo desafio inicial, mesma semente.',
+            '> jogador 2, identifique-se:',
+          ]
+        : [
+            '> conectando ao servidor da empresa...',
+            '> conexão estabelecida.',
+            '> ALERTA: o prédio foi invadido por vírus!',
+            '> precisamos de alguém para limpar os andares.',
+            '> identifique-se, hacker:',
+          ];
     const box = $('nick-lines');
     trocar(box);
     linhas.forEach((l, i) =>
@@ -165,8 +195,10 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
     }
     Sound.sfx.selecao();
     nickPendente = nick;
+    // duelo: o jogador 2 vai direto para o mesmo desafio do jogador 1
+    if (duelo?.fase === 2) comecar(MODO_DUELO);
     // o organizador pode travar um modo (ex.: só o rápido quando a fila está grande)
-    if (CONFIG.modoFixo) comecar(CONFIG.modoFixo);
+    else if (CONFIG.modoFixo) comecar(CONFIG.modoFixo);
     else irModo();
   }
 
@@ -177,14 +209,19 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
   }
 
   function comecar(modo: ModoId) {
-    battle.novaPartida(nickPendente, modo, { semente: sementeUrl() });
+    battle.novaPartida(nickPendente, modo, { semente: duelo ? duelo.semente : sementeUrl() });
+    // fantasma: no duelo, o jogador 2 corre contra o jogador 1; senão, contra o recordista do modo
+    fantasma = duelo?.fase === 2 && duelo.trilhaJ1 ? duelo.trilhaJ1 : fantasmas.carregar(modo);
     setEstado('tutorial', 'screen-tutorial');
   }
 
-  function escolherModo(modo: ModoId) {
+  function escolherModo(modo: ModoId | 'duelo') {
     if (estado !== 'modo' || travado()) return;
     Sound.sfx.selecao();
-    comecar(modo);
+    if (modo === 'duelo') {
+      duelo = { fase: 1, semente: sementeUrl() ?? Math.floor(Math.random() * 1e9), resultados: [], trilhaJ1: null };
+      comecar(MODO_DUELO);
+    } else comecar(modo);
   }
 
   // ================= ANDAR =================
@@ -222,7 +259,7 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
   }
 
   battle.on('alertaChefe', chefe => {
-    banner('⚠ AMEAÇA DETECTADA ⚠', chefe.nome, `"${chefe.falas.intro}"`, '', 'chefe');
+    banner('⚠ AMEAÇA DETECTADA ⚠', chefe.nome, `"${chefe.falas.intro}"`, chefe.dica ?? '', 'chefe');
     esperar(3200, () => ocultar('banner'));
   });
 
@@ -277,10 +314,7 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
     }
     const A = ANDARES[r.andar];
     const b = battle.estado!;
-    const p = r.p;
-    const cura = Math.round(p.maxHp * BAL.curaEntreAndares);
-    const antes = p.hp;
-    p.hp = Math.min(p.maxHp, p.hp + cura);
+    const curou = battle.curarEntreAndares();
     const total = b.stats.acertos + b.stats.erros;
     ocultar('hud');
     $('clear-title').textContent = `// ANDAR ${battle.posicao()} LIBERADO: ${A.nome}`;
@@ -290,7 +324,7 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
       linhaStat('inimigos removidos', b.stats.abates),
       linhaStat('precisão no andar', `${total ? Math.round((b.stats.acertos / total) * 100) : 100}%`),
       linhaStat('pontos no andar', `+${r.pontos - b.stats.inicioPontos}`),
-      linhaStat('manutenção do sistema', p.hp > antes ? `+${p.hp - antes} integridade` : 'integridade máxima', 'green'),
+      linhaStat('manutenção do sistema', curou > 0 ? `+${curou} integridade` : 'integridade máxima', 'green'),
     );
     $('clear-fact').textContent = A.fato;
     Sound.pararMusica();
@@ -300,13 +334,22 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
   });
 
   // ================= UPGRADES =================
+  let sinergiaNova: string | null = null; // sinergia ativada pela última carta (aparece na loja)
+
   function irUpgrade() {
     cartas = battle.sortearCartas(3);
+    renderCartas();
+    Sound.sfx.levelUp();
+    setEstado('upgrade', 'screen-upgrade');
+  }
+
+  function renderCartas() {
     const r = run();
     trocar(
       $('cards'),
       cartas.map((u, i) => {
         const rar = RARIDADES[u.raridade];
+        const area = AREAS_INFO[u.area];
         const nivel = r.upgrades[u.id] || 0;
         return h(
           'div',
@@ -316,17 +359,45 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
           h('div', { class: 'card-icon' }, u.icone),
           h('div', { class: 'card-name' }, u.nome),
           h('div', { class: 'card-desc' }, u.desc),
+          h('div', { class: 'card-area', style: { color: area.cor } }, area.nome),
           h('div', { class: 'card-lvl' }, u.max > 1 ? `nível ${nivel} → ${nivel + 1}` : 'único'),
         );
       }),
     );
-    Sound.sfx.levelUp();
-    setEstado('upgrade', 'screen-upgrade');
+    // progresso das sinergias: 3 cartas da mesma área ativam um bônus
+    const prog = battle.progressoAreas();
+    trocar(
+      $('sinergias'),
+      SINERGIAS.map(s => {
+        const ativa = r.sinergias.includes(s.area);
+        const area = AREAS_INFO[s.area];
+        return h(
+          'span',
+          { class: `sinergia ${ativa ? 'ativa' : ''}`, style: { '--cor': area.cor }, title: s.desc },
+          `${area.nome} ${Math.min(prog[s.area], s.minimo)}/${s.minimo}`,
+          ativa ? ' ✓' : '',
+        );
+      }),
+    );
+    $('rerrolar').textContent = `[R] trocar as cartas: ${battle.custoRerrolar()} ₿ (você tem ${r.p.creditos} ₿)`;
+  }
+
+  function rerrolarCartas() {
+    if (estado !== 'upgrade' || travado()) return;
+    const novas = battle.rerrolar();
+    if (!novas) {
+      Sound.sfx.negado();
+      return;
+    }
+    cartas = novas;
+    Sound.sfx.compra();
+    renderCartas();
   }
 
   function escolherCarta(i: number) {
     if (estado !== 'upgrade' || travado() || !cartas[i]) return;
-    battle.aplicarUpgrade(cartas[i]);
+    const s = battle.aplicarUpgrade(cartas[i]);
+    sinergiaNova = s ? `★ SINERGIA ATIVADA: ${s.nome}. ${s.desc}` : null;
     Sound.sfx.compra();
     document.querySelectorAll('.card')[i].classList.add('escolhida');
     irPara('escolhendo');
@@ -335,7 +406,10 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
 
   // ================= LOJA =================
   function irLoja() {
-    $('shop-msg').textContent = '';
+    const msg = $('shop-msg');
+    msg.textContent = sinergiaNova ?? '';
+    msg.className = 'gold';
+    sinergiaNova = null;
     renderLoja();
     setEstado('loja', 'screen-shop');
   }
@@ -381,9 +455,83 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
     renderLoja();
   }
 
+  // ================= ROTA (antes de cada andar) =================
+  // Rota segura ou de elite (mais forte, mais créditos e pontos) e, às vezes,
+  // um "servidor misterioso" para apostar créditos.
+  let servidorDisponivel = false;
+
+  function irRota() {
+    servidorDisponivel = battle.sortearServidor();
+    $('rota-msg').textContent = '';
+    renderRota();
+    setEstado('rota', 'screen-rota');
+  }
+
+  function renderRota() {
+    const r = run();
+    const prox = ANDARES[r.rota[r.passo + 1]];
+    const e = MEC.elite;
+    teclaRotaDica();
+    $('rota-titulo').textContent = `// PRÓXIMO: ANDAR ${battle.posicao() + 1} · ${prox.nome}`;
+    const opcao = (tecla: string, nome: string, desc: string, cls = '') =>
+      h('div', { class: `rota-opcao ${cls}` }, h('b', null, `[${tecla}] ${nome}`), h('small', null, desc));
+    trocar(
+      $('rota-opcoes'),
+      opcao('1', 'ROTA SEGURA', 'inimigos normais'),
+      opcao(
+        '2',
+        'ROTA DE ELITE',
+        `inimigos com +${Math.round((e.multVida - 1) * 100)}% de vida e +${Math.round((e.multDano - 1) * 100)}% de dano · créditos x${e.multRecompensa} · pontos x${e.multPontos}`,
+        'elite',
+      ),
+      servidorDisponivel
+        ? opcao(
+            '3',
+            'SERVIDOR MISTERIOSO',
+            `aposte ${MEC.servidor.aposta} ₿: 50% de chance de dobrar, 50% de perder (você tem ${r.p.creditos} ₿)`,
+            'servidor',
+          )
+        : null,
+    );
+  }
+
+  function teclaRotaDica() {
+    $('rota-dica').textContent = servidorDisponivel
+      ? 'escolha a rota com 1 ou 2 · 3 aposta no servidor'
+      : 'escolha a rota com 1 ou 2';
+  }
+
+  function teclaRota(k: string) {
+    if (k === '1' || k === '2') {
+      battle.escolherRota(k === '2');
+      Sound.sfx.selecao();
+      battle.avancar();
+      iniciarAndar();
+    } else if (k === '3' && servidorDisponivel) {
+      const res = battle.apostarServidor();
+      const msg = $('rota-msg');
+      if (res.resultado === 'sem credito') {
+        Sound.sfx.negado();
+        msg.className = 'red';
+        msg.textContent = '> créditos insuficientes para apostar.';
+        return;
+      }
+      servidorDisponivel = false; // uma aposta por servidor
+      if (res.resultado === 'ganhou') {
+        Sound.sfx.moeda();
+        msg.className = 'green';
+        msg.textContent = `> acesso root concedido: +${res.valor} ₿!`;
+      } else {
+        Sound.sfx.armadilha();
+        msg.className = 'red';
+        msg.textContent = `> era um honeypot: -${res.valor} ₿.`;
+      }
+      renderRota();
+    }
+  }
+
   function proximoAndar() {
-    battle.avancar();
-    iniciarAndar();
+    irRota();
   }
 
   // ================= PAUSA =================
@@ -439,6 +587,13 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
           data: new Date().toISOString(),
         });
 
+    // fantasma: a partida vira a referência do modo se bateu o recorde
+    if (!r.debug) fantasmas.registrar(r.modo, r.nick, r.pontos, r.trilha);
+    if (duelo) {
+      duelo.resultados[duelo.fase - 1] = { nick: r.nick, pontos: r.pontos, andar, totalAndares, ppm, precisao, venceu };
+      if (duelo.fase === 1) duelo.trilhaJ1 = { nick: r.nick, pontos: r.pontos, trilha: r.trilha.slice() };
+    }
+
     // registro no console (F12) para quem cuida do estande
     console.info(
       `[INVASAO] fim de jogo: ${r.nick} | ${r.modo} | ${r.pontos} pts | andar ${andar}/${totalAndares} | ${ppm} ppm | ${precisao}% | ${r.conquistas.length} conquistas${venceu ? ' | VENCEU' : ''}`,
@@ -478,9 +633,50 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
       h('div', { class: 'cta' }, `Gostou? Conheça o curso de ${CONFIG.curso}!`),
     );
     if (venceu) Sound.sfx.vitoria();
+    $('end-press').textContent = !duelo
+      ? '[ ENTER PARA VER SEU RELATÓRIO ]'
+      : duelo.fase === 1
+        ? '[ ENTER: VEZ DO JOGADOR 2 ]'
+        : '[ ENTER: RESULTADO DO DUELO ]';
     setEstado('fim', 'screen-end');
     travar(1500);
-    esperar(CONFIG.voltarTituloSeg * 1000, irRelatorio);
+    esperar(CONFIG.voltarTituloSeg * 1000, depoisDoFim);
+  }
+
+  // Depois da tela de fim: relatório (normal) ou o próximo passo do duelo
+  function depoisDoFim() {
+    if (!duelo) irRelatorio();
+    else if (duelo.fase === 1) {
+      duelo.fase = 2;
+      irNick();
+    } else irDuelo();
+  }
+
+  // ================= DUELO: RESULTADO =================
+  function irDuelo() {
+    limparTimers();
+    const [j1, j2] = duelo?.resultados ?? [];
+    if (!j1 || !j2) {
+      irTitulo();
+      return;
+    }
+    // vence quem fez mais pontos; empate se igual
+    const vencedor = j1.pontos === j2.pontos ? null : j1.pontos > j2.pontos ? j1 : j2;
+    $('duelo-titulo').textContent = vencedor ? `🏆 ${vencedor.nick} VENCEU O DUELO!` : 'EMPATE!';
+    const coluna = (j: ResultadoDuelo, n: number) =>
+      h(
+        'div',
+        { class: `duelo-jogador ${j === vencedor ? 'vencedor' : ''}` },
+        h('div', { class: 'duelo-nick' }, `J${n} · ${j.nick}`),
+        linhaStat('PONTOS', j.pontos),
+        linhaStat('ANDAR', j.venceu ? `${j.totalAndares}/${j.totalAndares} ✓` : `${j.andar}/${j.totalAndares}`),
+        linhaStat('VELOCIDADE', `${j.ppm} ppm`),
+        linhaStat('PRECISÃO', `${j.precisao}%`),
+      );
+    trocar($('duelo-placar'), coluna(j1, 1), h('div', { class: 'duelo-vs' }, 'VS'), coluna(j2, 2));
+    Sound.sfx.vitoria();
+    setEstado('duelo', 'screen-duelo');
+    esperar(CONFIG.voltarTituloSeg * 1000, irTitulo);
   }
 
   // ================= RELATÓRIO DE DESEMPENHO =================
@@ -751,6 +947,7 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
     } else if (k === '5') {
       if (agora() < confirmarApagarAte) {
         ranking.limpar();
+        fantasmas.limpar(); // o recordista apagado também deixa de ser o fantasma
         confirmarApagarAte = 0;
         msg.textContent = '> ranking apagado.';
       } else {
@@ -802,9 +999,26 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
     if (b.escudo > 0) status.push(['cyan', `[#] escudo x${b.escudo}`]);
     if (b.lento > 0) status.push(['amber', `c[_] café ${Math.ceil(b.lento)}s`]);
     if (p.reviver > 0) status.push(['pink', '^^^ backup']);
+    if (b.overdrive) status.push(['pink overdrive', '⚡ OVERDRIVE']);
+    if (b.elite) status.push(['gold', '★ ELITE']);
     definir('hud-status', JSON.stringify(status), () =>
       status.map(([cls, txt], i) => [i ? ' ' : '', h('span', { class: cls }, txt)]),
     );
+
+    // velocidade ao vivo e o fantasma (recordista do modo, ou o jogador 1 no duelo)
+    const tempo = r.stats.tempo;
+    const ppm = tempo > 5 ? Math.round(r.stats.acertos / 5 / (tempo / 60)) : 0;
+    let linhaFantasma = '';
+    let classeFantasma = '';
+    if (fantasma) {
+      const delta = r.pontos - fantasmas.pontosNoMomento(fantasma, tempo, PASSO_TRILHA);
+      linhaFantasma = `👻 ${fantasma.nick}: ${delta >= 0 ? '+' : ''}${delta}`;
+      classeFantasma = delta >= 0 ? 'green' : 'red';
+    }
+    definir('hud-extra', `${ppm}|${linhaFantasma}|${classeFantasma}`, () => [
+      h('div', null, `PPM ${ppm}`),
+      linhaFantasma ? h('div', { class: `fantasma ${classeFantasma}` }, linhaFantasma) : null,
+    ]);
 
     const mult = Math.round(Math.min(b.combo, BAL.comboMax) * BAL.comboPasso * 100);
     definir('hud-combo', b.combo > 1 ? `${b.combo}|${mult}` : '', () =>
@@ -827,19 +1041,21 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
 
     // prompt de digitação
     const pr = battle.prompt();
-    const chave = pr ? `${pr.texto}|${pr.dig}|${pr.ativo}` : '';
+    // a máscara esconde letras que ainda não chegaram (░) ou estão cifradas (*)
+    const visto = pr?.mascara ?? pr?.texto ?? '';
+    const chave = pr ? `${visto}|${pr.dig}|${pr.ativo}` : '';
     if (chave !== cachePrompt) {
       cachePrompt = chave;
       const el = $('prompt-text');
       if (!pr || !pr.texto) {
         trocar(el, h('span', { class: 'dica' }, 'digite a palavra de um inimigo...'));
       } else {
-        const prox = pr.texto[pr.dig] === ' ' ? '␣' : pr.texto[pr.dig] || '';
+        const prox = visto[pr.dig] === ' ' ? '␣' : visto[pr.dig] || '';
         trocar(
           el,
-          h('span', { class: 'feito' }, pr.texto.slice(0, pr.dig)),
+          h('span', { class: 'feito' }, visto.slice(0, pr.dig)),
           h('span', { class: 'prox' }, prox),
-          h('span', { class: 'resto' }, pr.texto.slice(pr.dig + 1)),
+          h('span', { class: 'resto' }, visto.slice(pr.dig + 1)),
         );
       }
       $('prompt').classList.toggle('inativo', !!pr && !pr.ativo);
@@ -911,6 +1127,7 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
     modo: k => {
       if (k === '1') escolherModo('normal');
       else if (k === '2') escolherModo('rapido');
+      else if (k === '3') escolherModo('duelo');
       else if (k === 'Escape') irTitulo();
     },
     tutorial: (k, e) => {
@@ -920,7 +1137,11 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
       }
     },
     concluido: k => k === 'Enter' && irUpgrade(),
-    upgrade: k => /^[1-3]$/.test(k) && escolherCarta(+k - 1),
+    upgrade: k => {
+      if (/^[1-3]$/.test(k)) escolherCarta(+k - 1);
+      else if (k === 'r' || k === 'R') rerrolarCartas();
+    },
+    rota: k => teclaRota(k),
     loja: k => {
       if (/^[1-4]$/.test(k)) comprar(+k - 1);
       else if (k === 'Enter') proximoAndar();
@@ -932,7 +1153,8 @@ export function criarUI({ battle, ranking, ajustes, config: CONFIG }: Dependenci
         $('pause-sound').textContent = textoSomPausa();
       } else if (k === '3') desistir();
     },
-    fim: k => k === 'Enter' && irRelatorio(),
+    fim: k => k === 'Enter' && depoisDoFim(),
+    duelo: k => (k === 'Enter' || k === 'Escape') && irTitulo(),
     relatorio: k => k === 'Enter' && irRanking(),
     ranking: k => (k === 'Enter' || k === 'Escape') && irTitulo(),
     pin: (k, e) => {

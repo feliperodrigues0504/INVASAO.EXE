@@ -106,7 +106,7 @@ test('fluxo completo de um visitante pela interface, com teclado real', async ({
     }
   });
 
-  await test.step('andar concluído → curiosidade → carta → loja → próximo andar', async () => {
+  await test.step('andar concluído → curiosidade → carta → loja → rota → próximo andar', async () => {
     await jogo.forcarFimDoAndar('vitoria');
     expect(await jogo.estado()).toBe('concluido');
     expect((await page.locator('#clear-fact').textContent())!.length).toBeGreaterThan(20);
@@ -120,8 +120,11 @@ test('fluxo completo de um visitante pela interface, com teclado real', async ({
     await jogo.teclaDepois('1');
     expect(await jogo.eval(j => [j.battle.run!.inventario.cafe, j.battle.run!.p.creditos])).toEqual([1, 70]);
     await jogo.tecla('Enter');
+    expect(await jogo.estado()).toBe('rota');
+    await expect(page.locator('#rota-opcoes')).toContainText('ROTA DE ELITE');
+    await jogo.teclaDepois('2'); // rota de elite
     expect(await jogo.estado()).toBe('banner');
-    expect(await jogo.eval(j => j.battle.run!.andar)).toBe(1);
+    expect(await jogo.eval(j => [j.battle.run!.andar, j.battle.estado!.elite])).toEqual([1, true]);
     await jogo.pular(3800);
   });
 
@@ -171,6 +174,7 @@ test('modo rápido: partida completa pela interface até a vitória, com ranking
       await jogo.teclaDepois('1');
       await jogo.pular(600); // a loja abre 500 ms depois da carta
       await jogo.teclaDepois('Enter');
+      await jogo.teclaDepois('1'); // rota segura
     }
   }
   expect(await jogo.estado()).toBe('fim');

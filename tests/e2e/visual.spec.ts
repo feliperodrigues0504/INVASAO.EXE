@@ -49,6 +49,67 @@ test('batalha, chefão e telas entre andares', async ({ jogo }) => {
   await jogo.pular(700);
   await jogo.avancar(100);
   await foto(jogo, '10-loja');
+  await jogo.eval(j => (j.battle.sortearServidor = () => true));
+  await jogo.teclaDepois('Enter');
+  await jogo.avancar(100);
+  await foto(jogo, '10b-rota');
+});
+
+test('batalha com as marcações da versão 4 (armadilha, especiais, elite, overdrive, fantasma)', async ({ jogo }) => {
+  await jogo.abrir('?semente=7');
+  await jogo.eval(j => j.fantasmas.registrar('normal', 'Recordista', 99999, [0, 400, 800]));
+  await jogo.debug(7);
+  await jogo.eval(j => {
+    const run = j.battle.run!;
+    run.p.maxHp = run.p.hp = 1e6;
+    j.ui.irTitulo(); // sem o fantasma do modo debug: recomeça pelo fluxo normal
+  });
+  await jogo.entrarNaBatalha('Visitante', '1');
+  await jogo.eval(j => {
+    const run = j.battle.run!;
+    run.p.maxHp = run.p.hp = 1e6;
+    j.battle.estado!.elite = true;
+  });
+  await jogo.avancar(6000);
+  await jogo.eval(j => {
+    const b = j.battle.estado!;
+    b.overdrive = true;
+    b.inimigos.forEach(e => (e.elite = true));
+    const [a, c] = b.inimigos.filter(e => !e.morrendo);
+    if (a) Object.assign(a, { armadilha: true, armadilhaT: 99, especial: null });
+    if (c) c.especial = 'dourada';
+  });
+  await jogo.avancar(100);
+  await foto(jogo, '06b-mecanicas');
+});
+
+test('resultado do duelo', async ({ jogo }) => {
+  await jogo.abrir('?semente=5');
+  for (const [nick, pontos] of [
+    ['Ana Clara', 5230],
+    ['Bruno', 6110],
+  ] as const) {
+    if (nick === 'Ana Clara') {
+      await jogo.teclaDepois('Enter');
+      await jogo.pular(700);
+      await jogo.preencher('nick-input', nick);
+      await jogo.tecla('Enter');
+      await jogo.teclaDepois('3');
+    } else {
+      await jogo.teclaDepois('Enter', 1600);
+      await jogo.pular(2000);
+      await jogo.preencher('nick-input', nick);
+      await jogo.tecla('Enter');
+    }
+    await jogo.teclaDepois('Enter');
+    await jogo.pular(3800);
+    await jogo.eval((j, p) => (j.battle.run!.pontos = p), pontos);
+    await jogo.tecla('Escape');
+    await jogo.teclaDepois('3');
+  }
+  await jogo.teclaDepois('Enter', 1600);
+  await jogo.avancar(100);
+  await foto(jogo, '16-duelo');
 });
 
 test('fim, relatório, ranking e painel', async ({ jogo }) => {
